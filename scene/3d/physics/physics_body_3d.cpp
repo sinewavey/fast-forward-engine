@@ -105,7 +105,8 @@ Ref<KinematicCollision3D> PhysicsBody3D::_move(const Vector3 &p_motion, bool p_t
 	return Ref<KinematicCollision3D>();
 }
 
-bool PhysicsBody3D::move_and_collide(const PhysicsServer3D::MotionParameters &p_parameters, PhysicsServer3D::MotionResult &r_result, bool p_test_only, bool p_cancel_sliding) {
+bool PhysicsBody3D::move_and_collide(const PhysicsServer3D::MotionParameters &p_parameters, 
+PhysicsServer3D::MotionResult &r_result, bool p_test_only, bool p_cancel_sliding) {
 	bool colliding = PhysicsServer3D::get_singleton()->body_test_motion(get_rid(), p_parameters, &r_result);
 
 	// Restore direction of motion to be along original motion,

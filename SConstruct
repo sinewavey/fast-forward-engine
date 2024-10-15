@@ -15,7 +15,7 @@ from collections import OrderedDict
 from importlib.util import module_from_spec, spec_from_file_location
 from types import ModuleType
 
-from SCons import __version__ as scons_raw_version
+from SCons import __version__ as scons_raw_version # type: ignore
 
 # Explicitly resolve the helper modules, this is done to avoid clash with
 # modules of the same name that might be randomly added (e.g. someone adding
@@ -100,7 +100,7 @@ for x in sorted(glob.glob("platform/*")):
     tmppath = "./" + x
 
     sys.path.insert(0, tmppath)
-    import detect
+    import detect # type: ignore
 
     # Get doc classes paths (if present)
     try:
@@ -434,7 +434,7 @@ for path in module_search_paths:
 # Add module options.
 for name, path in modules_detected.items():
     sys.path.insert(0, path)
-    import config
+    import config # type: ignore
 
     if env["modules_enabled_by_default"]:
         enabled = True
@@ -541,7 +541,7 @@ if env["precision"] == "double":
 
 tmppath = "./platform/" + env["platform"]
 sys.path.insert(0, tmppath)
-import detect
+import detect # type: ignore
 
 # Default num_jobs to local cpu count if not user specified.
 # SCons has a peculiarity where user-specified options won't be overridden
@@ -801,11 +801,17 @@ if not env.msvc:
     # Specifying GNU extensions support explicitly, which are supported by
     # both GCC and Clang. Both currently default to gnu11 and gnu++17.
     env.Prepend(CFLAGS=["-std=gnu11"])
-    env.Prepend(CXXFLAGS=["-std=gnu++17"])
+    # env.Prepend(CXXFLAGS=["-std=gnu++17"])
+    
+    # NOTE: fast-forward uses C++23
+    env.Prepend(CXXFLAGS=["-std=gnu++2b"])
 else:
-    # MSVC started offering C standard support with Visual Studio 2019 16.8, which covers all
-    # of our supported VS2019 & VS2022 versions; VS2017 will only pass the C++ standard.
-    env.Prepend(CXXFLAGS=["/std:c++17"])
+    # env.Prepend(CXXFLAGS=["/std:c++17"])
+
+    # NOTE: fast-foward-engine uses c++23 - bumping up from godot c++17
+    # Allow use of `__cplusplus` macro to determine C++ standard universally.
+    # In addition, enable lambda preprocessor, enum type deduction and enforce type conversion rules.
+    env.Prepend(CXXFLAGS=["/std:c++latest","/Zc:__cplusplus","/Zc:enumTypes","/Zc:lambda","/Zc:rvalueCast"])
     if cc_version_major < 16:
         print_warning("Visual Studio 2017 cannot specify a C-Standard.")
     else:
@@ -813,9 +819,9 @@ else:
     # MSVC is non-conforming with the C++ standard by default, so we enable more conformance.
     # Note that this is still not complete conformance, as certain Windows-related headers
     # don't compile under complete conformance.
+    
+    # NOTE: this may be removed, i don't want this - VL
     env.Prepend(CCFLAGS=["/permissive-"])
-    # Allow use of `__cplusplus` macro to determine C++ standard universally.
-    env.Prepend(CXXFLAGS=["/Zc:__cplusplus"])
 
 # Disable exception handling. Godot doesn't use exceptions anywhere, and this
 # saves around 20% of binary size and very significant build time (GH-80513).
@@ -852,6 +858,7 @@ if env.msvc and not methods.using_clang(env):  # MSVC
                 "/wd4305",  # C4305 (truncation): double to float or real_t, too hard to avoid.
                 "/wd4514",  # C4514 (unreferenced inline function has been removed)
                 "/wd4714",  # C4714 (function marked as __forceinline not inlined)
+                "/wd4996",  # C4996 (std::float_denorm_style deprecation in c++23)
                 "/wd4820",  # C4820 (padding added after construct)
             ]
         )
@@ -945,7 +952,7 @@ for name, path in modules_detected.items():
         continue
     sys.path.insert(0, path)
     env.current_module = name
-    import config
+    import config # type: ignore
 
     if config.can_build(env, env["platform"]):
         # Disable it if a required dependency is missing.
