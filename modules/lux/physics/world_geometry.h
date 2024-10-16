@@ -2,7 +2,6 @@
 #define LUX_WORLD_GEOMETRY_H
 
 #include "../shared.h"
-
 #include "scene/3d/physics/static_body_3d.h"
 
 class WorldGeometry : public StaticBody3D {

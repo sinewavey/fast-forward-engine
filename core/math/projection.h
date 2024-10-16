@@ -79,6 +79,12 @@ struct [[nodiscard]] Projection {
 	void set_orthogonal(real_t p_size, real_t p_aspect, real_t p_znear, real_t p_zfar, bool p_flip_fov = false);
 	void set_frustum(real_t p_left, real_t p_right, real_t p_bottom, real_t p_top, real_t p_near, real_t p_far);
 	void set_frustum(real_t p_size, real_t p_aspect, Vector2 p_offset, real_t p_near, real_t p_far, bool p_flip_fov = false);
+	// void set_oblique(const Vector3& plane_normal,
+	// 	real_t						plane_distance,
+	// 	real_t						fov_y,
+	// 	real_t						aspect_ratio,
+	// 	real_t						near_plane,
+	// 	real_t						far_plane);
 	void adjust_perspective_znear(real_t p_new_znear);
 
 	static Projection create_depth_correction(bool p_flip_y);

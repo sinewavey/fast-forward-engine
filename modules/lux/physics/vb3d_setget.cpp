@@ -10,14 +10,14 @@ real_t VirtualBody3D::get_duck_time() const {
 
 void VirtualBody3D::set_player_controlled(bool p_player_controlled) {
 	if (p_player_controlled) {
-		flags |= FLAG_PLAYER_CONTROLLED;
+		flags |= PlayerControlled;
 	} else {
-		flags &= ~FLAG_PLAYER_CONTROLLED;
+		flags &= ~PlayerControlled;
 	}
 }
 
 bool VirtualBody3D::is_player_controlled() const {
-	return flags & FLAG_PLAYER_CONTROLLED;
+	return flags & PlayerControlled;
 }
 
 void VirtualBody3D::set_camera(Camera3D* p_camera) {
@@ -30,6 +30,14 @@ void VirtualBody3D::set_camera(Camera3D* p_camera) {
 
 Camera3D* VirtualBody3D::get_camera() const {
 	return Object::cast_to<Camera3D>(ObjectDB::get_instance(camera));
+}
+
+void VirtualBody3D::set_view_angles(const Vector3& p_angles) {
+	model.view_angles = p_angles;
+}
+
+Vector3 VirtualBody3D::get_view_angles() const {
+	return model.view_angles;
 }
 
 void VirtualBody3D::set_crouch_collider(CollisionShape3D* p_shape) {

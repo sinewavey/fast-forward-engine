@@ -6,10 +6,7 @@
 #include "core/input/input.h"
 #include "core/input/input_map.h"
 #include "core/input/input_event.h"
-
-
 #include "scene/3d/camera_3d.h"
-
 
 class VirtualBody3D : public PhysicsBody3D {
 	GDCLASS(VirtualBody3D, PhysicsBody3D);
@@ -22,9 +19,10 @@ class VirtualBody3D : public PhysicsBody3D {
 	}; // clang-format on
 
 	enum Flags {
-		FLAG_PLAYER_CONTROLLED = 1,
-		FLAG_DUCKING		   = 1 << 1,
-		FLAG_DUCKED			   = 1 << 2,
+		PlayerControlled = 1,
+		Ducking			 = 1 << 1,
+		Ducked			 = 1 << 2,
+		SurfaceControl	 = 1 << 3,
 	};
 
 	struct BodyModel {
@@ -42,13 +40,15 @@ class VirtualBody3D : public PhysicsBody3D {
 		Vector2 input_dir{};
 		Vector2 sway{};
 
+		Vector3 origin[2];
 		Vector3 view_angles{};
-		Vector3 view_offset{};
-
-		Vector3 velocity{};
-		Vector3 platform_velocity{};
+		Vector3 view_offset{ 0.0f, 0.4375f, 0.0f };
 
 		Vector3 normal{};
+
+		Vector3 velocity{};
+		Vector3 angular_velocity{};
+		Vector3 platform_velocity{};
 
 		uint32_t surface_flags{ 0 };
 
@@ -81,15 +81,19 @@ public:
 	real_t get_duck_time() const;
 	real_t get_flag_time() const;
 
+	void	set_view_angles(const Vector3& p_angles);
+	Vector3 get_view_angles() const;
+
 	void apply_properties(const Dictionary& p_properties);
 	void build_complete();
 
 	void apply_impulse(const Vector3& p_impulse, const Vector3& p_position = Vector3());
 	void push(real_t p_force, Vector3 p_dir, real_t p_mass = 1.0);
 
-	void check_contacts();
 	void check_duck();
 	void check_unduck();
+	void check_platform();
+	void check_surface_control();
 	void check_water_level();
 
 	void move_and_slide(double p_delta);

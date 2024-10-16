@@ -11,3 +11,4 @@ print("Building Fast Forward types...")
 env_lux.add_source_files(env.modules_sources, "*.cpp")
 
 SConscript("physics/SCsub")
+SConscript("io/SCsub")
