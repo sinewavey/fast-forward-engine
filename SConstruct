@@ -860,6 +860,7 @@ if env.msvc and not methods.using_clang(env):  # MSVC
                 "/wd4714",  # C4714 (function marked as __forceinline not inlined)
                 "/wd4996",  # C4996 (std::float_denorm_style deprecation in c++23)
                 "/wd4820",  # C4820 (padding added after construct)
+                "/wd5055",  # C5055 enum != floating_type deprecated in c++23
             ]
         )
 

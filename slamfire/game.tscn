@@ -1,6 +1,6 @@
-[gd_scene load_steps=9 format=3 uid="uid://d38snrn2m07o8"]
+[gd_scene load_steps=8 format=3 uid="uid://d38snrn2m07o8"]
 
-[ext_resource type="Script" path="res://test.gd" id="1_80nbo"]
+[ext_resource type="PackedScene" uid="uid://drwxwpcr0cd60" path="res://data/player.tscn" id="1_80nbo"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_mwb40"]
 sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
@@ -14,9 +14,6 @@ background_mode = 2
 sky = SubResource("Sky_80nbo")
 tonemap_mode = 2
 glow_enabled = true
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_mwb40"]
-size = Vector3(0.8, 1.75, 0.8)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mwb40"]
 albedo_color = Color(0.118581, 0.118581, 0.118581, 1)
@@ -37,21 +34,14 @@ shadow_enabled = true
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_e2o6t")
 
-[node name="VirtualBody3D" type="VirtualBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
-script = ExtResource("1_80nbo")
-
-[node name="StandShape" type="CollisionShape3D" parent="VirtualBody3D"]
-shape = SubResource("BoxShape3D_mwb40")
-
-[node name="Camera3D" type="Camera3D" parent="VirtualBody3D"]
-
-[node name="StaticBody3D" type="StaticBody3D" parent="."]
+[node name="WorldGeometry" type="WorldGeometry" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2, 0)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="StaticBody3D"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WorldGeometry"]
 mesh = SubResource("BoxMesh_80nbo")
 skeleton = NodePath("../..")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WorldGeometry"]
 shape = SubResource("ConcavePolygonShape3D_80nbo")
+
+[node name="Player" parent="." instance=ExtResource("1_80nbo")]

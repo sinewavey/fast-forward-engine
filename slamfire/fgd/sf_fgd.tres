@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="FuncGodotFGDFile" load_steps=7 format=3 uid="uid://bedyl26q1ikxt"]
+
+[ext_resource type="Resource" uid="uid://bxfhub1po3ope" path="res://fgd/phong_base.tres" id="1_sowh1"]
+[ext_resource type="Resource" uid="uid://bu367m2fdw47j" path="res://fgd/worldspawn.tres" id="2_omieq"]
+[ext_resource type="Resource" uid="uid://c3hdysek3axhl" path="res://fgd/func_world.tres" id="3_023xv"]
+[ext_resource type="Resource" uid="uid://dbkl47g2hkev1" path="res://fgd/func_detail.tres" id="4_c5jul"]
+[ext_resource type="Resource" uid="uid://cl8twbumr2w11" path="res://fgd/info_player_start.tres" id="5_ntj68"]
+[ext_resource type="Script" path="res://addons/func_godot/src/fgd/func_godot_fgd_file.gd" id="6_yg8ew"]
+
+[resource]
+script = ExtResource("6_yg8ew")
+export_file = false
+target_map_editor = 1
+fgd_name = "SLAMFIRE"
+base_fgd_files = Array[Resource]([])
+entity_definitions = Array[Resource]([ExtResource("1_sowh1"), ExtResource("2_omieq"), ExtResource("3_023xv"), ExtResource("4_c5jul"), ExtResource("5_ntj68")])

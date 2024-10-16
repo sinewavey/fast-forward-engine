@@ -104,7 +104,6 @@ Export("env_openxr")
 SConscript("action_map/SCsub")
 SConscript("extensions/SCsub")
 SConscript("scene/SCsub")
-
 if env.editor_build:
     SConscript("editor/SCsub")
 

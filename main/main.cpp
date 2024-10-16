@@ -133,6 +133,8 @@
 #endif // TOOLS_ENABLED && !GDSCRIPT_NO_LSP
 #endif // MODULE_GDSCRIPT_ENABLED
 
+// Fast Forward types
+
 /* Static members */
 
 // Singletons
@@ -758,6 +760,8 @@ Error Main::test_setup() {
 	initialize_theme_db();
 
 	register_scene_types();
+
+
 	register_driver_types();
 
 	register_scene_singletons();

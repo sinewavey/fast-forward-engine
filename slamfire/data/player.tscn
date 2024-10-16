@@ -1,0 +1,28 @@
+[gd_scene load_steps=4 format=3 uid="uid://drwxwpcr0cd60"]
+
+[ext_resource type="Script" path="res://test.gd" id="1_snjxw"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_snjxw"]
+size = Vector3(0.8, 0.875, 0.8)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_mwb40"]
+size = Vector3(0.8, 1.75, 0.8)
+
+[node name="Player" type="VirtualBody3D" node_paths=PackedStringArray("camera", "crouch_collider", "stand_collider")]
+player_controlled = true
+camera = NodePath("Camera3D")
+crouch_collider = NodePath("CrouchShape")
+crouch_shape = SubResource("BoxShape3D_snjxw")
+stand_collider = NodePath("StandShape")
+stand_shape = SubResource("BoxShape3D_mwb40")
+script = ExtResource("1_snjxw")
+
+[node name="StandShape" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_mwb40")
+
+[node name="CrouchShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.438, 0)
+shape = SubResource("BoxShape3D_snjxw")
+disabled = true
+
+[node name="Camera3D" type="Camera3D" parent="."]

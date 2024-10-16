@@ -274,7 +274,6 @@
 #include "scene/3d/physics/spring_arm_3d.h"
 #include "scene/3d/physics/static_body_3d.h"
 #include "scene/3d/physics/vehicle_body_3d.h"
-#include "scene/3d/physics/virtual_body_3d.h"
 #include "scene/3d/reflection_probe.h"
 #include "scene/3d/remote_transform_3d.h"
 #include "scene/3d/skeleton_3d.h"
@@ -306,6 +305,7 @@
 #include "scene/resources/3d/sphere_shape_3d.h"
 #include "scene/resources/3d/world_3d.h"
 #include "scene/resources/3d/world_boundary_shape_3d.h"
+
 #endif // _3D_DISABLED
 
 static Ref<ResourceFormatSaverText> resource_saver_text;
@@ -1235,8 +1235,6 @@ void register_scene_types() {
 
 	SceneDebugger::initialize();
 
-	print_line("register ff types");
-	GDREGISTER_CLASS(VirtualBody3D);
 
 	OS::get_singleton()->benchmark_end_measure("Scene", "Register Types");
 }
