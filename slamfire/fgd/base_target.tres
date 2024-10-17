@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="FuncGodotFGDBaseClass" load_steps=3 format=3 uid="uid://drar0fjhxmemx"]
+
+[ext_resource type="Resource" uid="uid://8lath5ux8mpv" path="res://fgd/base_targetname.tres" id="1_5ym1e"]
+[ext_resource type="Script" path="res://addons/func_godot/src/fgd/func_godot_fgd_base_class.gd" id="2_jkyw5"]
+
+[resource]
+script = ExtResource("2_jkyw5")
+classname = "Target"
+description = ""
+func_godot_internal = false
+base_classes = Array[Resource]([ExtResource("1_5ym1e")])
+class_properties = {
+"target": ""
+}
+class_property_descriptions = {}
+meta_properties = {
+"color": Color(0.8, 0.8, 0.8, 1),
+"size": AABB(-8, -8, -8, 8, 8, 8)
+}
+node_class = ""
+name_property = ""

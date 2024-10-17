@@ -2,6 +2,8 @@
 #include "world_geometry.h"
 
 VirtualBody3D::VirtualBody3D() : PhysicsBody3D(PhysicsServer3D::BODY_MODE_KINEMATIC) {
+	engine		 = Engine::get_singleton();
+	system_input = Input::get_singleton();
 }
 
 VirtualBody3D::~VirtualBody3D() {
@@ -11,9 +13,13 @@ void VirtualBody3D::enter_tree() {
 	if (Engine::get_singleton()->is_editor_hint()) {
 		return;
 	}
+	// Enable base processing, internal physics processing, and transform notifications.
 	set_process(true);
 	set_physics_process(true);
+	set_process_internal(true);
+	set_physics_process_internal(true);
 	set_process_input(is_player_controlled());
+	set_notify_transform(true);
 }
 
 void VirtualBody3D::apply_properties(const Dictionary& p_properties) {
@@ -23,6 +29,14 @@ void VirtualBody3D::build_complete() {
 }
 
 void VirtualBody3D::ready() {
+}
+
+void VirtualBody3D::tick() {
+	uint64_t this_tick = Engine::get_singleton()->get_physics_frames();
+	if (last_physics_tick != this_tick) {
+		buffer[1]		  = buffer[0];
+		last_physics_tick = this_tick;
+	}
 }
 
 void VirtualBody3D::apply_impulse(const Vector3& p_impulse, const Vector3& p_position) {
@@ -50,12 +64,11 @@ void VirtualBody3D::check_surface_control() {
 	model.normal		 = Vector3();
 
 	PhysicsServer3D::MotionParameters params{
-		get_global_transform(), Vector3(0.0f, -0.1, 0.0f), 0.004f
+		get_global_transform(), Vector3(0.0f, -0.1f, 0.0f), 0.004f
 	};
 	PhysicsServer3D::MotionResult trace;
 
 	auto collision = move_and_collide(params, trace, true);
-
 	print_line(collision);
 
 	if (!collision) {
@@ -92,6 +105,18 @@ void VirtualBody3D::update(double p_delta) {
 	if (Engine::get_singleton()->is_editor_hint() || !is_inside_tree()) {
 		return;
 	}
+
+	// var fnc := camera_3d.set_global_position;
+
+	// if Engine.get_frames_per_second() > Engine.physics_ticks_per_second:
+	// 	fnc.call(buffer[1].lerp(buffer[0], clampf(Engine.get_physics_interpolation_fraction(),
+	// 0.0, 1.0))) else: 	fnc.call(buffer[0])
+
+	if (auto cam = get_camera(); cam != nullptr) {
+		auto fnc = [cam](Vector3 p) { cam->set_global_position(p); };
+
+		if (engine->get_frames_per_second() > engine->get_physics_ticks_per_second()) {}
+	}
 }
 
 void VirtualBody3D::update_timers(double p_delta) {
@@ -104,8 +129,12 @@ void VirtualBody3D::update_physics(double p_delta) {
 		return;
 	}
 
-	model.origin[1] = model.origin[0];
+	if (is_player_controlled()) {
+		model.input_dir =
+			Input::get_singleton()->get_vector("left", "right", "forward", "backward");
+	}
 
+	model.origin[1] = model.origin[0];
 	update_timers(p_delta);
 
 	check_duck();
@@ -115,7 +144,6 @@ void VirtualBody3D::update_physics(double p_delta) {
 
 	check_surface_control();
 	move_and_slide(p_delta);
-
 	model.origin[0] = model.origin[1];
 }
 
@@ -124,6 +152,10 @@ void VirtualBody3D::_notification(int p_what) {
 		case NOTIFICATION_ENTER_TREE:
 			{
 				enter_tree();
+				break;
+			}
+		case NOTIFICATION_ENTER_WORLD:
+			{
 				break;
 			}
 		case NOTIFICATION_READY:
@@ -139,6 +171,27 @@ void VirtualBody3D::_notification(int p_what) {
 		case NOTIFICATION_PHYSICS_PROCESS:
 			{
 				update_physics(get_physics_process_delta_time());
+				break;
+			}
+		case NOTIFICATION_INTERNAL_PROCESS:
+			{
+
+				break;
+			}
+		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS:
+			{
+				tick();
+				buffer[0] = get_global_position();
+				break;
+			}
+		case NOTIFICATION_TRANSFORM_CHANGED:
+			{
+				tick();
+				buffer[0] = get_global_position();
+				break;
+			}
+		case NOTIFICATION_RESET_PHYSICS_INTERPOLATION:
+			{
 				break;
 			}
 	}

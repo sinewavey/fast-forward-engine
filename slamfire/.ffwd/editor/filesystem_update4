@@ -1,0 +1,9 @@
+res://game.tscn
+res://data/neutral_env.tres
+res://fgd/entity_trigger.tres
+res://fgd/base_shadow.tres
+res://fgd/sf_nrc_cfg.tres
+res://fgd/entity_worldspawn.tres
+res://fgd/sf_fgd.tres
+res://fgd/entity_func_detail.tres
+res://fgd/entity_func_world.tres

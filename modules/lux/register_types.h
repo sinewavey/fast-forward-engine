@@ -1,4 +1,3 @@
-
 #ifndef LUX_REGISTER_TYPES_H
 #define LUX_REGISTER_TYPES_H
 

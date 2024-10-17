@@ -1,5 +1,5 @@
-short_name = "godot"
-name = "Godot Engine"
+short_name = "ffwd"
+name = "Fast Forward Engine"
 major = 4
 minor = 4
 patch = 0

@@ -42,17 +42,12 @@ def detect_arch():
 
 def get_build_version(short):
     import version
-
-    name = "custom_build"
-    if os.getenv("BUILD_NAME") is not None:
-        name = os.getenv("BUILD_NAME")
+    name = "ffwd"
     v = "%d.%d" % (version.major, version.minor)
     if version.patch > 0:
         v += ".%d" % version.patch
     status = version.status
     if not short:
-        if os.getenv("GODOT_VERSION_STATUS") is not None:
-            status = str(os.getenv("GODOT_VERSION_STATUS"))
         v += ".%s.%s" % (status, name)
     return v
 

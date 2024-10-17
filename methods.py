@@ -195,7 +195,7 @@ def add_module_version_string(self, s):
 
 
 def get_version_info(module_version_string="", silent=False):
-    build_name = "custom_build"
+    build_name = "ffwd"
     if os.getenv("BUILD_NAME") is not None:
         build_name = str(os.getenv("BUILD_NAME"))
         if not silent:
@@ -1089,7 +1089,7 @@ def dump(env):
 #
 # To generate AND build from the command line:
 #   scons vsproj=yes vsproj_gen_only=no
-def generate_vs_project(env, original_args, project_name="godot"):
+def generate_vs_project(env, original_args, project_name="ffwd"):
     # Augmented glob_recursive that also fills the dirs argument with traversed directories that have content.
     def glob_recursive_2(pattern, dirs, node="."):
         from SCons import Node
@@ -1162,7 +1162,7 @@ def generate_vs_project(env, original_args, project_name="godot"):
             continue
         tmppath = "./" + x
         sys.path.insert(0, tmppath)
-        import msvs
+        import msvs # type: ignore
 
         vs_plats = []
         vs_confs = []

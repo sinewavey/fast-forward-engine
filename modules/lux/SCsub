@@ -6,9 +6,10 @@ Import("env_modules")
 
 env_lux = env_modules.Clone()
 
-print("Building Fast Forward types...")
+print("ffwd: building...")
 
 env_lux.add_source_files(env.modules_sources, "*.cpp")
 
 SConscript("physics/SCsub")
 SConscript("io/SCsub")
+SConscript("controller/SCsub")

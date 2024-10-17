@@ -60,14 +60,14 @@ static void apply_fgd_properties(Node* p_node, const Dictionary& p_properties) {
 		p_node->set(key, p_properties[key]);
 
 		if (kstr == "targetname") {
-			StringName tn = p_properties["targetname"];
+			StringName tn{ p_properties.get("targetname", "") };
 			if (!tn.is_empty()) {
-				p_node->add_to_group(p_properties["targetname"], true);
+				p_node->add_to_group(tn, true);
 			}
 			continue;
 		}
 		if (kstr == "target") {
-			String target = p_properties["target"];
+			String target = p_properties.get("target", "");
 			if (!target.is_empty()) {
 				p_node->set_meta("target", target);
 			}

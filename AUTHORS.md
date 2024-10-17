@@ -1,3 +1,18 @@
+# Fast Forward Engine authors
+
+Fast Forward engine is developed indirectly by the Godot contributors.
+It features extensions on top of the existing engine with fewer direct moifications.
+
+## Development
+
+Vera Lux (sinewavey)
+
+## Other credits and indirect contributors
+
+justkairos
+rantrave-git
+RhapsodyInGeek
+
 # Godot Engine authors
 
 Godot Engine is developed by a community of voluntary contributors who

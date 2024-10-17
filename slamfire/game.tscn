@@ -1,47 +1,68 @@
-[gd_scene load_steps=8 format=3 uid="uid://d38snrn2m07o8"]
+[gd_scene load_steps=10 format=4 uid="uid://d38snrn2m07o8"]
 
+[ext_resource type="Environment" uid="uid://kif6rb0qnk71" path="res://data/neutral_env.tres" id="1_7jktm"]
 [ext_resource type="PackedScene" uid="uid://drwxwpcr0cd60" path="res://data/player.tscn" id="1_80nbo"]
+[ext_resource type="Script" path="res://addons/func_godot/src/map/func_godot_map.gd" id="1_e2o6t"]
+[ext_resource type="Resource" uid="uid://85nwmw08yaon" path="res://fgd/sf_map_settings.tres" id="2_feb5d"]
+[ext_resource type="Material" uid="uid://cxk7tllfod7ic" path="res://textures/common/sf_default_texture.tres" id="6_eow3j"]
 
-[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_mwb40"]
-sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
-ground_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_7jktm"]
+points = PackedVector3Array(1.25, 1.25, -1.75, 1.25, 1.25, 1.75, -1.25, 1.25, 1.75, -1.25, 1.25, -1.75, 1.25, -1.25, -1.75, 1.25, -1.25, 1.75, -1.25, -1.25, 1.75, -1.25, -1.25, -1.75)
 
-[sub_resource type="Sky" id="Sky_80nbo"]
-sky_material = SubResource("ProceduralSkyMaterial_mwb40")
+[sub_resource type="ArrayMesh" id="ArrayMesh_ryrav"]
+_surfaces = [{
+"aabb": AABB(-6, -1.55, -7.05, 12, 4, 14.1),
+"attribute_data": PackedByteArray("/v/fQWZmPkH//99BZmYgQgAAgEBmZiBCAACAQGZmPkFmZj5BAAAAAGZmPkH+///AZ2YgQv///8BnZiBCAAAAAAAA4MEAAAAAAADgwQAAAMECAIDAAAAAwQIAgMAAAAAAZ2Ygwv///8BmZj7B////wGZmPsEAAAAAZ2YgwgAAAAD+/39AYE5BNf7/f0AAAADB///fQf7//8D//99BAAAAAA=="),
+"format": 34359742487,
+"index_count": 30,
+"index_data": PackedByteArray("AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMA"),
+"material": ExtResource("6_eow3j"),
+"name": "common/sf_default_texture",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 20,
+"vertex_data": PackedByteArray("/P+/QGZmxr+WmeHA/v+/QGZmxr+cmeFAAADAwGZmxr+cmeFAAADAwGZmxr+WmeHAAADAQGZmxr+WmeHAAADAQMvMHECWmeHAAADAQMzMHECgmeFAAADAQGZmxr+gmeFAAADAQGZmxr+cmeFAAADAQM3MHECcmeFA//+/wM3MHECcmeFA//+/wGZmxr+cmeFAAADAwMzMHECgmeFAAADAwMzMHECWmeHAAADAwGZmxr+WmeHAAADAwGZmxr+gmeFAAADAwGlmxr+WmeHAAADAwM3MHECWmeHA/v+/QMvMHECWmeHA/v+/QGZmxr+WmeHA/3///////7//f///////v/9///////+//3///////78AAP9//3//vwAA/3//f/+/AAD/f/9//78AAP9//3//v/////8AAP+//////wAA/7//////AAD/v/////8AAP+/////f/////////9//////////3//////////f///////f/9/////v/9//3////+//3//f////7//f/9/////vw==")
+}]
 
-[sub_resource type="Environment" id="Environment_e2o6t"]
-background_mode = 2
-sky = SubResource("Sky_80nbo")
-tonemap_mode = 2
-glow_enabled = true
+[sub_resource type="ArrayOccluder3D" id="ArrayOccluder3D_eow3j"]
+vertices = PackedVector3Array(6, -1.55, -7.05, 6, -1.55, 7.05, -6, -1.55, 7.05, -6, -1.55, -7.05, 6, -1.55, -7.05, 6, 2.45, -7.05, 6, 2.45, 7.05, 6, -1.55, 7.05, 6, -1.55, 7.05, 6, 2.45, 7.05, -6, 2.45, 7.05, -6, -1.55, 7.05, -6, 2.45, 7.05, -6, 2.45, -7.05, -6, -1.55, -7.05, -6, -1.55, 7.05, -6, -1.55, -7.05, -6, 2.45, -7.05, 6, 2.45, -7.05, 6, -1.55, -7.05)
+indices = PackedInt32Array(0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mwb40"]
-albedo_color = Color(0.118581, 0.118581, 0.118581, 1)
+[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_j5wjh"]
+data = PackedVector3Array(6, -1.55, -7.05, 6, -1.55, 7.05, -6, -1.55, 7.05, 6, -1.55, -7.05, -6, -1.55, 7.05, -6, -1.55, -7.05, 6, -1.55, -7.05, 6, 2.45, -7.05, 6, 2.45, 7.05, 6, -1.55, -7.05, 6, 2.45, 7.05, 6, -1.55, 7.05, 6, -1.55, 7.05, 6, 2.45, 7.05, -6, 2.45, 7.05, 6, -1.55, 7.05, -6, 2.45, 7.05, -6, -1.55, 7.05, -6, 2.45, 7.05, -6, 2.45, -7.05, -6, -1.55, -7.05, -6, 2.45, 7.05, -6, -1.55, -7.05, -6, -1.55, 7.05, -6, -1.55, -7.05, -6, 2.45, -7.05, 6, 2.45, -7.05, -6, -1.55, -7.05, 6, 2.45, -7.05, 6, -1.55, -7.05)
 
-[sub_resource type="BoxMesh" id="BoxMesh_80nbo"]
-material = SubResource("StandardMaterial3D_mwb40")
-size = Vector3(25, 1, 25)
-
-[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_80nbo"]
-data = PackedVector3Array(-12.5, 0.5, 12.5, 12.5, 0.5, 12.5, -12.5, -0.5, 12.5, 12.5, 0.5, 12.5, 12.5, -0.5, 12.5, -12.5, -0.5, 12.5, 12.5, 0.5, -12.5, -12.5, 0.5, -12.5, 12.5, -0.5, -12.5, -12.5, 0.5, -12.5, -12.5, -0.5, -12.5, 12.5, -0.5, -12.5, 12.5, 0.5, 12.5, 12.5, 0.5, -12.5, 12.5, -0.5, 12.5, 12.5, 0.5, -12.5, 12.5, -0.5, -12.5, 12.5, -0.5, 12.5, -12.5, 0.5, -12.5, -12.5, 0.5, 12.5, -12.5, -0.5, -12.5, -12.5, 0.5, 12.5, -12.5, -0.5, 12.5, -12.5, -0.5, -12.5, 12.5, 0.5, 12.5, -12.5, 0.5, 12.5, 12.5, 0.5, -12.5, -12.5, 0.5, 12.5, -12.5, 0.5, -12.5, 12.5, 0.5, -12.5, -12.5, -0.5, 12.5, 12.5, -0.5, 12.5, -12.5, -0.5, -12.5, 12.5, -0.5, 12.5, 12.5, -0.5, -12.5, -12.5, -0.5, -12.5)
-
-[node name="Node" type="Node"]
-
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0, 0, 0)
-shadow_enabled = true
+[node name="SLAMFIRER" type="Node"]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("Environment_e2o6t")
+environment = ExtResource("1_7jktm")
 
-[node name="WorldGeometry" type="WorldGeometry" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2, 0)
+[node name="MapInstance" type="Node" parent="."]
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="WorldGeometry"]
-mesh = SubResource("BoxMesh_80nbo")
-skeleton = NodePath("../..")
+[node name="FuncGodotMap" type="Node3D" parent="MapInstance"]
+script = ExtResource("1_e2o6t")
+local_map_file = "res://maps/dbg.map"
+map_settings = ExtResource("2_feb5d")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="WorldGeometry"]
-shape = SubResource("ConcavePolygonShape3D_80nbo")
+[node name="entity_0_worldspawn" type="Node3D" parent="MapInstance/FuncGodotMap"]
 
-[node name="Player" parent="." instance=ExtResource("1_80nbo")]
+[node name="entity_1_info_player_start" parent="MapInstance/FuncGodotMap" instance=ExtResource("1_80nbo")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 7, 1, 8.5)
+
+[node name="entity_2_trigger" type="Trigger" parent="MapInstance/FuncGodotMap"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.75, 1.25, 15.75)
+
+[node name="entity_2_brush_0_collision_shape" type="CollisionShape3D" parent="MapInstance/FuncGodotMap/entity_2_trigger"]
+shape = SubResource("ConvexPolygonShape3D_7jktm")
+
+[node name="entity_3_func_world" type="WorldGeometry" parent="MapInstance/FuncGodotMap"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 1.55, 13)
+collision_mask = 0
+
+[node name="entity_3_mesh_instance" type="MeshInstance3D" parent="MapInstance/FuncGodotMap/entity_3_func_world"]
+mesh = SubResource("ArrayMesh_ryrav")
+
+[node name="entity_3_occluder_instance" type="OccluderInstance3D" parent="MapInstance/FuncGodotMap/entity_3_func_world"]
+occluder = SubResource("ArrayOccluder3D_eow3j")
+
+[node name="entity_3_collision_shape" type="CollisionShape3D" parent="MapInstance/FuncGodotMap/entity_3_func_world"]
+shape = SubResource("ConcavePolygonShape3D_j5wjh")
