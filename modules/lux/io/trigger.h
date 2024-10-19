@@ -11,16 +11,17 @@ public:
 	void	   set_target(const StringName& p_target) { target = p_target; }
 	StringName get_target() const { return target; }
 
-	void set_player_usable(bool p_usable) { player_usable = p_usable; }
-	bool is_player_usable() const { return player_usable; }
+	void	   set_target_func(const StringName& p_target_func) { target_func = p_target_func; }
+	StringName get_target_func() const { return target_func; }
 
-	void apply_properties(const Dictionary& p_properties);
-	void build_complete();
+	bool is_player_usable() const { return flags & Lux::TRIGGER_USABLE; }
+
+	virtual void apply_properties(const Dictionary& p_properties);
+	virtual void build_complete();
+	virtual void use(Node* p_activator);
 
 	void body_entered(Node3D* p_body);
 	void body_exited(Node3D* p_body);
-
-	void use(Node* p_activator);
 
 	Trigger();
 
@@ -29,7 +30,10 @@ protected:
 
 private:
 	StringName target{};
-	bool	   player_usable{ false };
+	StringName target_func{ "use" };
+
+	uint16_t		  flags{ 0 };
+	Lux::TriggerState state{ Lux::TRIGGER_READY };
 };
 
 #endif

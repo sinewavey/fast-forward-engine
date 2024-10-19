@@ -10,6 +10,7 @@ print("ffwd: building...")
 
 env_lux.add_source_files(env.modules_sources, "*.cpp")
 
+SConscript("map/SCsub")
 SConscript("physics/SCsub")
 SConscript("io/SCsub")
 SConscript("controller/SCsub")

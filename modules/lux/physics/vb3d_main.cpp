@@ -4,6 +4,24 @@
 VirtualBody3D::VirtualBody3D() : PhysicsBody3D(PhysicsServer3D::BODY_MODE_KINEMATIC) {
 	engine		 = Engine::get_singleton();
 	system_input = Input::get_singleton();
+
+	set_process_mode(PROCESS_MODE_PAUSABLE);
+
+	if (Engine::get_singleton()->is_editor_hint()) {
+		return;
+	}
+
+	input_cmd.actions.clear();
+
+	for (auto action : action_list) {
+		input_cmd.actions.insert(action, 0.0);
+	}
+
+	set_process(true);
+	set_physics_process(true);
+	set_process_internal(true);
+	set_physics_process_internal(true);
+	set_notify_transform(true);
 }
 
 VirtualBody3D::~VirtualBody3D() {
@@ -13,115 +31,242 @@ void VirtualBody3D::enter_tree() {
 	if (Engine::get_singleton()->is_editor_hint()) {
 		return;
 	}
-	// Enable base processing, internal physics processing, and transform notifications.
-	set_process(true);
-	set_physics_process(true);
-	set_process_internal(true);
-	set_physics_process_internal(true);
+
 	set_process_input(is_player_controlled());
-	set_notify_transform(true);
 }
 
 void VirtualBody3D::apply_properties(const Dictionary& p_properties) {
+	Lux::FGD::apply_properties(this, p_properties);
+	cam_data.view_angles = p_properties.get("angles", Vector3());
 }
 
 void VirtualBody3D::build_complete() {
+	Lux::FGD::finalize_entity(this);
+	if (get_camera() != nullptr) {
+		get_camera()->set_quaternion(Quaternion::from_euler(cam_data.view_angles));
+	}
 }
 
 void VirtualBody3D::ready() {
 }
 
-void VirtualBody3D::tick() {
+void VirtualBody3D::ensure_interpolation_update() {
 	uint64_t this_tick = Engine::get_singleton()->get_physics_frames();
-	if (last_physics_tick != this_tick) {
-		buffer[1]		  = buffer[0];
-		last_physics_tick = this_tick;
+	if (cam_data.last_physics_tick != this_tick) {
+		cam_data.buffer[1]		   = cam_data.buffer[0];
+		cam_data.last_physics_tick = this_tick;
 	}
 }
 
+void VirtualBody3D::apply_acceleration(Vector3 p_dir,
+	real_t									   p_speed,
+	real_t									   p_accel,
+	double									   p_delta) {
+
+	real_t add = p_speed - body_data.velocity.dot(p_dir);
+
+	if (p_accel <= 0.0 || add <= 0.0) {
+		return;
+	}
+
+	real_t acc			= MIN(p_speed * p_accel * p_delta, add);
+	body_data.velocity += p_dir * acc;
+}
+
+void VirtualBody3D::apply_friction(double p_delta) {
+	auto& vel = body_data.velocity;
+	auto  vec = Vector3(vel);
+
+	if (flags & SurfaceControl) {
+		vec[1] = 0.0f;
+	}
+
+	auto speed = vec.length();
+
+	if (speed < 0.03125) {
+		vel[0] = 0.0f;
+		vel[2] = 0.0f;
+		return;
+	}
+
+	auto   fric{ mv_friction };
+	real_t drop{}, control{};
+
+	// Non submerged ground friction; applied if the player is
+	// not walking on slick surfaces, not about to jump or is in knockback time.
+	if (body_data.water_level < 2) {
+		if (flags & SurfaceControl &&
+			!(body_data.surface_flags & Lux::SurfaceType::SURFACE_SLICK)) {
+			if (!(flags & QueueJump || flags & Knockback)) {
+				control	 = MAX(mv_stopspeed, speed);
+				drop	+= control * fric * p_delta;
+			}
+		}
+	}
+
+	// Water friction goes here
+
+	real_t mod{ MAX(speed - drop, 0.0f) };
+	mod /= speed;
+
+	vel[0] *= mod;
+	vel[2] *= mod;
+}
+
+void VirtualBody3D::apply_gravity(double p_delta) {
+}
+
 void VirtualBody3D::apply_impulse(const Vector3& p_impulse, const Vector3& p_position) {
-	// model.velocity += p_impulse;
 }
 
 void VirtualBody3D::push(real_t p_force, Vector3 p_dir, real_t p_mass) {
 	for (int i = 0; i < 3; i++) {
-		model.velocity[i] += p_force * p_dir[i] / p_mass;
+		body_data.velocity[i] += p_force * p_dir[i] / p_mass;
 	}
 }
 
-void VirtualBody3D::check_duck() {
+void VirtualBody3D::duck() {
+
+};
+void VirtualBody3D::unduck() {
+
+};
+
+void VirtualBody3D::jump() {
+	if (flags & QueueJump) {
+		flags &= ~QueueJump;
+		flags &= ~SurfaceControl;
+
+		auto pos  = get_global_position();
+		pos[1]	 += 0.1;
+		set_global_position(pos);
+
+		body_data.velocity	  = body_data.velocity.slide(body_data.normal);
+		body_data.velocity[1] = MAX(body_data.velocity[1] + mv_jump, mv_jump);
+	}
+};
+
+bool VirtualBody3D::check_duck() {
+	return false;
 }
 
-void VirtualBody3D::check_unduck() {
+bool VirtualBody3D::check_unduck() {
+	return false;
+}
+
+bool VirtualBody3D::check_jump() {
+	if (flags & SurfaceControl && input_cmd.actions["jump"] > 0.0f) {
+		flags |= QueueJump;
+	}
+
+	return flags & QueueJump;
 }
 
 void VirtualBody3D::check_platform() {
 }
 
 void VirtualBody3D::check_surface_control() {
-	flags				&= ~SurfaceControl;
-	model.surface_flags	 = 0;
-	model.normal		 = Vector3();
+	flags					&= ~SurfaceControl;
+	body_data.surface_flags	 = 0;
+	body_data.normal		 = Vector3(0.0, 1.0, 0.0);
 
-	PhysicsServer3D::MotionParameters params{
-		get_global_transform(), Vector3(0.0f, -0.1f, 0.0f), 0.004f
-	};
-	PhysicsServer3D::MotionResult trace;
+	auto trace = _move(Vector3(0.0f, -0.1f, 0.0f), true, 0.004);
 
-	auto collision = move_and_collide(params, trace, true);
-	print_line(collision);
-
-	if (!collision) {
+	if (trace.is_null()) {
 		return;
 	}
 
-	for (int i{ 0 }; i < trace.collision_count; i++) {
-		auto cid = trace.collisions[i].collider_id;
+	for (int i{ 0 }; i < trace->get_collision_count(); i++) {
+		auto collider = trace->get_collider(i);
 
-		if (auto collider = Object::cast_to<WorldGeometry>(ObjectDB::get_instance(cid));
-			collider != nullptr) {
-			model.surface_flags |= collider->surface_flags;
+		if (auto wg = Object::cast_to<WorldGeometry>(collider); wg != nullptr) {
+			body_data.surface_flags |= wg->surface_flags;
 		}
 
-		auto n = trace.collisions[i].normal;
+		auto n = trace->get_normal(i);
 		if (n[1] > 0.7) {
-			flags		 |= SurfaceControl;
-			model.normal  = n;
+			flags			 |= SurfaceControl;
+			body_data.normal  = n;
 			return;
 		}
 	}
 }
 
 void VirtualBody3D::check_water_level() {
+	body_data.water_level = 0;
 }
 
-void VirtualBody3D::move_and_slide(double delta) {
+void VirtualBody3D::move_and_slide(double p_delta) {
 	if (Engine::get_singleton()->is_editor_hint() || !is_inside_tree()) {
 		return;
 	}
+
+	Vector3 mpos{ get_global_position() };
+	Vector3 move_vel{ body_data.velocity };
+	double	mdist{ move_vel.length() * p_delta };
+
+	for (int i = 0; i < 6; ++i) {
+		if (mdist < 0.002) {
+			break;
+		}
+
+		PhysicsServer3D::MotionResult	  trace	 = PhysicsServer3D::MotionResult();
+		PhysicsServer3D::MotionParameters params = PhysicsServer3D::MotionParameters();
+
+		params.from			  = get_global_transform();
+		params.motion		  = move_vel.normalized() * mdist;
+		params.margin		  = 0.002;
+		params.max_collisions = 6;
+
+		auto collision = move_and_collide(params, trace);
+
+		if (!collision) {
+			break;
+		}
+
+		mdist -= (get_global_position() - mpos).length();
+
+		for (int j = 0; j < trace.collision_count; ++j) {
+			Vector3 n = trace.collisions[j].normal;
+			print_line("Sub collision normal", j, n);
+			if (flags & SurfaceControl) {
+				if (n[1] >= 0.7) {
+					move_vel = Lux::clip(move_vel, n, 1.001);
+				} else if (move_vel.dot(n) < 0.0f) {
+					move_vel = Lux::clip(move_vel, n, 1.001);
+				}
+			} else {
+				if (n[1] > 0.7) {
+					check_surface_control();
+					if (body_data.surface_flags & Lux::SurfaceType::SURFACE_FORCE_AIR) {
+						move_vel = Lux::clip(move_vel, n, 1.001);
+					}
+				} else {
+					if (move_vel.dot(n) < 0.0f) {
+						move_vel = Lux::clip(move_vel, n, 1.001);
+					}
+				}
+			}
+		}
+		mpos = get_global_position();
+	}
+
+	check_surface_control();
+	body_data.velocity	= move_vel;
+	body_data.origin[0] = mpos;
 }
 
 void VirtualBody3D::update(double p_delta) {
 	if (Engine::get_singleton()->is_editor_hint() || !is_inside_tree()) {
 		return;
-	}
+	};
 
-	// var fnc := camera_3d.set_global_position;
-
-	// if Engine.get_frames_per_second() > Engine.physics_ticks_per_second:
-	// 	fnc.call(buffer[1].lerp(buffer[0], clampf(Engine.get_physics_interpolation_fraction(),
-	// 0.0, 1.0))) else: 	fnc.call(buffer[0])
-
-	if (auto cam = get_camera(); cam != nullptr) {
-		auto fnc = [cam](Vector3 p) { cam->set_global_position(p); };
-
-		if (engine->get_frames_per_second() > engine->get_physics_ticks_per_second()) {}
-	}
+	input_cmd.motion = Vector2();
 }
 
 void VirtualBody3D::update_timers(double p_delta) {
-	model.duck_time = MIN<real_t>(model.duck_time - p_delta, 0.0);
-	model.flag_time = MIN<real_t>(model.duck_time - p_delta, 0.0);
+	body_data.duck_time = MIN<real_t>(body_data.duck_time - p_delta, 0.0);
+	body_data.flag_time = MIN<real_t>(body_data.duck_time - p_delta, 0.0);
 }
 
 void VirtualBody3D::update_physics(double p_delta) {
@@ -129,22 +274,71 @@ void VirtualBody3D::update_physics(double p_delta) {
 		return;
 	}
 
+	// cache data and update pre-move inputs
+	body_data.origin[1] = body_data.origin[0];
+
 	if (is_player_controlled()) {
-		model.input_dir =
-			Input::get_singleton()->get_vector("left", "right", "forward", "backward");
+		update_frame_input(p_delta);
 	}
 
-	model.origin[1] = model.origin[0];
 	update_timers(p_delta);
 
+	// Before we do moves, check for changes in the physics shape size and its results.
 	check_duck();
 	check_unduck();
+	check_water_level();
 
+	// Check if (still) standing on a platform and "silently" add the velocity.
+	// Performs an internal grounded check that is not taken into account for determining surface
+	// control.
 	check_platform();
 
 	check_surface_control();
+	check_jump();
+
+	// Wish direction depends on the contacted surface
+	Vector3 wish_dir;
+	// if (flags & Ladder) { // Move along ladders first, even when under water.
+	// wish_dir =
+	// 	Quaternion::from_euler(cam_data.view_angles).xform(Vector3(input_cmd.dir[0], 0.0f,
+	// input_cmd.dir[1]));
+	// } // else if (water_level > 2) {
+	// slide along ground or otherwise wish dir is true transform (may move in all 3 axes)
+	// } else {
+	// create a flat input direction otherwise
+
+	wish_dir = Vector3(input_cmd.dir[0], 0.0f, input_cmd.dir[1]);
+	wish_dir.rotate(Vector3(0.0f, 1.0f, 0.0f), cam_data.view_angles[1] + Lux::m_pi);
+
+	// wish_dir = Basis(Vector3{ 0.0f, 1.0f, 0.0f }, cam_data.view_angles[1])
+	// 			   .xform(Vector3{ input_cmd.dir[0], 0.0f, input_cmd.dir[1] });
+	// }
+
+	// Project onto movement plane
+	wish_dir = wish_dir.slide(body_data.normal);
+
+	real_t accel;
+	// If airborne or on a slick surface, apply air acceleration and gravity
+	if (!(flags & SurfaceControl) || (body_data.surface_flags & Lux::SurfaceType::SURFACE_SLICK)) {
+		body_data.velocity[1] -= mv_gravity * p_delta;
+		accel				   = mv_air_accel;
+	} else {
+		accel = mv_accel;
+	}
+	// Calculate water friction here
+
+	// Apply forces for frame and move body.
+	apply_friction(p_delta);
+	apply_acceleration(wish_dir, mv_speed, accel, p_delta);
+
+	// Slide along the ground
+	if (flags & SurfaceControl) {
+		body_data.velocity = body_data.velocity.slide(body_data.normal);
+	}
+
 	move_and_slide(p_delta);
-	model.origin[0] = model.origin[1];
+
+	jump();
 }
 
 void VirtualBody3D::_notification(int p_what) {
@@ -156,6 +350,11 @@ void VirtualBody3D::_notification(int p_what) {
 			}
 		case NOTIFICATION_ENTER_WORLD:
 			{
+				if (get_camera() != nullptr) {
+					get_camera()->set_physics_interpolation_mode(PHYSICS_INTERPOLATION_MODE_OFF);
+				}
+				cam_data.buffer[0] = get_global_position() + cam_data.base_offset;
+				cam_data.buffer[1] = cam_data.buffer[1];
 				break;
 			}
 		case NOTIFICATION_READY:
@@ -165,34 +364,54 @@ void VirtualBody3D::_notification(int p_what) {
 			}
 		case NOTIFICATION_PROCESS:
 			{
-				update(get_process_delta_time());
+				if (!get_tree()->is_paused()) {
+					update(get_process_delta_time());
+				}
 				break;
 			}
 		case NOTIFICATION_PHYSICS_PROCESS:
 			{
-				update_physics(get_physics_process_delta_time());
+				if (!get_tree()->is_paused()) {
+					update_physics(get_physics_process_delta_time());
+				}
 				break;
 			}
 		case NOTIFICATION_INTERNAL_PROCESS:
 			{
-
+				if (Engine::get_singleton()->is_editor_hint() || !is_inside_tree() ||
+					get_tree()->is_paused()) {
+					return;
+				}
+				if (auto cam = get_camera(); cam != nullptr) {
+					uint64_t frame = Engine::get_singleton()->get_frames_drawn();
+					if (cam_data.last_update_frame != frame || cam_data.skip) {
+						cam_data.skip			   = false;
+						cam_data.last_update_frame = frame;
+						cam_data.adj_origin		   = cam_data.buffer[1].lerp(cam_data.buffer[0],
+							   CLAMP(engine->get_physics_interpolation_fraction(), 0.0, 1.0));
+						cam->set_global_position(cam_data.adj_origin);
+					}
+				}
 				break;
 			}
 		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS:
 			{
-				tick();
-				buffer[0] = get_global_position();
+				ensure_interpolation_update();
+				cam_data.buffer[0] = get_global_position() + cam_data.base_offset;
 				break;
 			}
 		case NOTIFICATION_TRANSFORM_CHANGED:
 			{
-				tick();
-				buffer[0] = get_global_position();
+				ensure_interpolation_update();
+				cam_data.buffer[0] = get_global_position() + cam_data.base_offset;
 				break;
 			}
 		case NOTIFICATION_RESET_PHYSICS_INTERPOLATION:
 			{
-				break;
+				if (is_inside_tree()) {
+					cam_data.buffer[0] = get_global_position();
+					cam_data.buffer[1] = cam_data.buffer[0];
+				}
 			}
 	}
 }
