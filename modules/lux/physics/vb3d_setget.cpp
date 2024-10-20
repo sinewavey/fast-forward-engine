@@ -1,5 +1,13 @@
 #include "virtual_body_3d.h"
 
+void VirtualBody3D::set_msens(real_t p_msens) {
+	msens = p_msens;
+};
+
+real_t VirtualBody3D::get_msens() const {
+	return msens;
+};
+
 real_t VirtualBody3D::get_flag_time() const {
 	return body_data.flag_time;
 }

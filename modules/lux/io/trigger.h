@@ -8,13 +8,16 @@ class Trigger : public Area3D {
 	GDCLASS(Trigger, Area3D);
 
 public:
-	void	   set_target(const StringName& p_target) { target = p_target; }
-	StringName get_target() const { return target; }
+	void	   set_target(const StringName& p_target);
+	StringName get_target() const;
 
-	void	   set_target_func(const StringName& p_target_func) { target_func = p_target_func; }
-	StringName get_target_func() const { return target_func; }
+	void	   set_target_func(const StringName& p_target_func);
+	StringName get_target_func() const;
 
-	bool is_player_usable() const { return flags & Lux::TRIGGER_USABLE; }
+	bool is_player_usable() const;
+
+	void					   set_flags(BitField<Lux::TriggerFlag> p_flags);
+	BitField<Lux::TriggerFlag> get_flags() const;
 
 	virtual void apply_properties(const Dictionary& p_properties);
 	virtual void build_complete();
@@ -32,8 +35,8 @@ private:
 	StringName target{};
 	StringName target_func{ "use" };
 
-	uint16_t		  flags{ 0 };
-	Lux::TriggerState state{ Lux::TRIGGER_READY };
+	BitField<Lux::TriggerFlag> flags{ 0 };
+	Lux::TriggerState		   state{ Lux::TRIGGER_READY };
 };
 
 #endif

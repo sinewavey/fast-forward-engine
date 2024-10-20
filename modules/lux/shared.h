@@ -33,21 +33,23 @@
 
 namespace Lux {
 
-enum SurfaceType : uint8_t {
+enum SurfaceFlag : uint8_t {
 	SURFACE_SLICK	  = 1,
 	SURFACE_FORCE_AIR = 1 << 1,
 	SURFACE_BOUNCE	  = 1 << 2,
 	SURFACE_FLESH	  = 1 << 3,
 	SURFACE_NODROPS	  = 1 << 4,
+	SURFACE_CLIMBABLE = 1 << 5,
 };
 
 enum TriggerFlag : uint8_t {
-	TRIGGER_ONCE		= 1,
-	TRIGGER_TOGGLE		= 1 << 1,
-	TRIGGER_ON_ENTRY	= 1 << 2,
-	TRIGGER_ON_EXIT		= 1 << 3,
-	TRIGGER_USABLE		= 1 << 4,
-	TRIGGER_PLAYER_ONLY = 1 << 5,
+	TRIGGER_ONCE	  = 1,
+	TRIGGER_TOGGLE	  = 1 << 1,
+	TRIGGER_USABLE	  = 1 << 2,
+	TRIGGER_ON_ENTRY  = 1 << 3,
+	TRIGGER_ON_EXIT	  = 1 << 4,
+	TRIGGER_ON_PLAYER = 1 << 5,
+	TRIGGER_ON_ENEMY  = 1 << 6,
 };
 
 enum TriggerState {
@@ -198,6 +200,7 @@ static void finalize_entity(Node* p_node) {
 }
 
 } // namespace FGD
+
 
 } // namespace Lux
 

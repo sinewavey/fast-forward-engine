@@ -11,12 +11,6 @@ VirtualBody3D::VirtualBody3D() : PhysicsBody3D(PhysicsServer3D::BODY_MODE_KINEMA
 		return;
 	}
 
-	input_cmd.actions.clear();
-
-	for (auto action : action_list) {
-		input_cmd.actions.insert(action, 0.0);
-	}
-
 	set_process(true);
 	set_physics_process(true);
 	set_process_internal(true);
@@ -96,7 +90,7 @@ void VirtualBody3D::apply_friction(double p_delta) {
 	// not walking on slick surfaces, not about to jump or is in knockback time.
 	if (body_data.water_level < 2) {
 		if (flags & SurfaceControl &&
-			!(body_data.surface_flags & Lux::SurfaceType::SURFACE_SLICK)) {
+			!(body_data.surface_flags & Lux::SurfaceFlag::SURFACE_SLICK)) {
 			if (!(flags & QueueJump || flags & Knockback)) {
 				control	 = MAX(mv_stopspeed, speed);
 				drop	+= control * fric * p_delta;
@@ -155,7 +149,7 @@ bool VirtualBody3D::check_unduck() {
 }
 
 bool VirtualBody3D::check_jump() {
-	if (flags & SurfaceControl && input_cmd.actions["jump"] > 0.0f) {
+	if (flags & SurfaceControl && input_cmd.upmove > 0.0f) {
 		flags |= QueueJump;
 	}
 
@@ -196,10 +190,88 @@ void VirtualBody3D::check_water_level() {
 	body_data.water_level = 0;
 }
 
-void VirtualBody3D::move_and_slide(double p_delta) {
-	if (Engine::get_singleton()->is_editor_hint() || !is_inside_tree()) {
-		return;
+VirtualBody3D::Trace VirtualBody3D::cast_trace(Vector3 p_from, Vector3 p_to) {
+	real_t frac[2] = { 1.0f, 1.0f };
+
+	Transform3D	 tr{ get_global_basis(), p_from };
+	Vector3		 motion{ p_to - p_from };
+	auto		 active_shape{ stand_shape };
+	HashSet<RID> exclude{};
+	exclude.insert(get_rid());
+
+	PhysicsDirectSpaceState3D::ShapeParameters params{};
+	PhysicsDirectSpaceState3D::ShapeRestInfo   rest_info{};
+
+	params.shape_rid = active_shape->get_rid();
+	// params.margin			   = active_shape->get_margin();
+	params.margin			   = 0.002;
+	params.transform		   = tr;
+	params.motion			   = motion;
+	params.exclude			   = exclude;
+	params.collide_with_bodies = true;
+	params.collide_with_areas  = false;
+
+	auto dss = get_world_3d()->get_direct_space_state();
+
+	auto result = dss->cast_motion(params, frac[0], frac[1]);
+
+	if (!result) {
+		return Trace{ p_to };
 	}
+
+	Vector3 p_end{ p_from + motion * frac[0] };
+	params.transform.origin = p_end;
+
+	dss->rest_info(params, &rest_info);
+
+	return Trace{ p_end, rest_info.normal, frac[0], frac[1] };
+};
+
+bool VirtualBody3D::trace_step(Vector3 p_in_vel, Vector3& p_out_vel, double p_delta) {
+
+	if (p_in_vel.length_squared() < 1.0) {
+		p_in_vel = p_in_vel.normalized() * mv_speed;
+	}
+
+	Vector3 start{ get_global_position() };
+	Vector3 step_pos{ start };
+
+	step_pos[1] += mv_step_height;
+
+	auto trace_up = cast_trace(start, step_pos);
+
+	// Ensure stairs are reversible: cap up move height if head bonk.
+	if (trace_up.position[1] < step_pos[1]) {
+		step_pos[1] = trace_up.position[1];
+	}
+
+	step_pos += Vector3(p_in_vel[0], 0.0, p_in_vel[2]) * p_delta;
+	// FIXME: Probably should be a real slide move
+	auto trace_fwd = cast_trace(trace_up.position, step_pos);
+
+	// Push back down
+	auto trace_down = cast_trace(
+		trace_fwd.position, Vector3(trace_fwd.position[0], start[1], trace_fwd.position[2]));
+
+	if (trace_down.position.distance_squared_to(start) < 0.01) {
+		return false;
+	}
+
+	if (trace_down.position[1] >= start[1] && trace_down.normal.y > 0.7) {
+		set_global_position(trace_down.position);
+		// p_out_vel  = Lux::clip(p_in_vel, trace_down.normal, 1.001);
+		flags |= SurfaceControl;
+		return true;
+	}
+	return false;
+}
+
+bool VirtualBody3D::move_and_slide(double p_delta) {
+	if (Engine::get_singleton()->is_editor_hint() || !is_inside_tree()) {
+		return false;
+	}
+
+	bool clipped{ false };
 
 	Vector3 mpos{ get_global_position() };
 	Vector3 move_vel{ body_data.velocity };
@@ -224,24 +296,28 @@ void VirtualBody3D::move_and_slide(double p_delta) {
 			break;
 		}
 
+		clipped = true;
+
 		mdist -= (get_global_position() - mpos).length();
 
 		for (int j = 0; j < trace.collision_count; ++j) {
 			Vector3 n = trace.collisions[j].normal;
-			print_line("Sub collision normal", j, n);
 			if (flags & SurfaceControl) {
 				if (n[1] >= 0.7) {
 					move_vel = Lux::clip(move_vel, n, 1.001);
+					// } else if (move_vel.dot(n) < 0.0f && !trace_step(move_vel, move_vel,
+					// p_delta)) {
 				} else if (move_vel.dot(n) < 0.0f) {
 					move_vel = Lux::clip(move_vel, n, 1.001);
 				}
 			} else {
-				if (n[1] > 0.7) {
-					check_surface_control();
-					if (body_data.surface_flags & Lux::SurfaceType::SURFACE_FORCE_AIR) {
+				if (n[1] >= 0.7) {
+					// check_surface_control();
+					if (body_data.surface_flags & Lux::SurfaceFlag::SURFACE_FORCE_AIR) {
 						move_vel = Lux::clip(move_vel, n, 1.001);
 					}
 				} else {
+					// if (move_vel.dot(n) < 0.0f && !trace_step(move_vel, move_vel, p_delta)) {
 					if (move_vel.dot(n) < 0.0f) {
 						move_vel = Lux::clip(move_vel, n, 1.001);
 					}
@@ -251,16 +327,18 @@ void VirtualBody3D::move_and_slide(double p_delta) {
 		mpos = get_global_position();
 	}
 
-	check_surface_control();
+	// check_surface_control();
+
 	body_data.velocity	= move_vel;
 	body_data.origin[0] = mpos;
+
+	return clipped;
 }
 
 void VirtualBody3D::update(double p_delta) {
 	if (Engine::get_singleton()->is_editor_hint() || !is_inside_tree()) {
 		return;
 	};
-
 	input_cmd.motion = Vector2();
 }
 
@@ -278,7 +356,7 @@ void VirtualBody3D::update_physics(double p_delta) {
 	body_data.origin[1] = body_data.origin[0];
 
 	if (is_player_controlled()) {
-		update_frame_input(p_delta);
+		update_frame_input();
 	}
 
 	update_timers(p_delta);
@@ -289,8 +367,8 @@ void VirtualBody3D::update_physics(double p_delta) {
 	check_water_level();
 
 	// Check if (still) standing on a platform and "silently" add the velocity.
-	// Performs an internal grounded check that is not taken into account for determining surface
-	// control.
+	// Performs an internal grounded check that is not taken into account for determining
+	// surface control.
 	check_platform();
 
 	check_surface_control();
@@ -319,7 +397,7 @@ void VirtualBody3D::update_physics(double p_delta) {
 
 	real_t accel;
 	// If airborne or on a slick surface, apply air acceleration and gravity
-	if (!(flags & SurfaceControl) || (body_data.surface_flags & Lux::SurfaceType::SURFACE_SLICK)) {
+	if (!(flags & SurfaceControl) || (body_data.surface_flags & Lux::SurfaceFlag::SURFACE_SLICK)) {
 		body_data.velocity[1] -= mv_gravity * p_delta;
 		accel				   = mv_air_accel;
 	} else {
@@ -336,9 +414,40 @@ void VirtualBody3D::update_physics(double p_delta) {
 		body_data.velocity = body_data.velocity.slide(body_data.normal);
 	}
 
-	move_and_slide(p_delta);
+	// Store positions for the double move and slide
+	auto start = get_global_position();
+	auto vel   = body_data.velocity;
 
-	jump();
+	if (move_and_slide(p_delta)) { // note: this is *not* godot's built in move and slide
+		auto trace = cast_trace(start, start + Vector3(0.0f, -mv_step_height, 0.0f));
+
+		// stair stepping does not occur if we are moving upwards off the ground plane
+		if (body_data.velocity[1] > 0 && (trace.fraction[0] == 1.0 || trace.normal[1] < 0.7)) {
+			return;
+		}
+
+		trace			 = cast_trace(start, start + Vector3(0.0f, mv_step_height, 0.0f));
+		real_t step_size = trace.position[1] - start[1];
+
+		// reset and try the slide move again from the step height
+		set_global_position(trace.position);
+		body_data.velocity = vel;
+		move_and_slide(p_delta);
+
+		// push back down and check final surface
+		trace = cast_trace(
+			get_global_position(), get_global_position() - Vector3(0.0f, step_size, 0.0f));
+
+		if (trace.fraction[0] != 0.0f) {
+			set_global_position(trace.position);
+		}
+		if (trace.fraction[0] < 1.0f) {
+			body_data.velocity = Lux::clip(body_data.velocity, trace.normal, 1.001f);
+		}
+	};
+
+	check_surface_control();
+	jump(); // mama i am sorry this is Here
 }
 
 void VirtualBody3D::_notification(int p_what) {

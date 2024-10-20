@@ -10,13 +10,13 @@ class WorldGeometry : public StaticBody3D {
 public:
 	WorldGeometry();
 
-	void	 set_surface_flags(uint32_t p_flags);
-	uint32_t get_surface_flags() const;
+	void						set_surface_flags(BitField<Lux::SurfaceFlag> p_flags);
+	BitField<Lux::SurfaceFlag> get_surface_flags() const;
 
 	void apply_properties(const Dictionary& p_properties);
 	void build_complete();
 
-	uint32_t surface_flags{};
+	BitField<Lux::SurfaceFlag> surface_flags{};
 
 protected:
 	static void _bind_methods();

@@ -1,5 +1,5 @@
-#ifndef VIRTUAL_BODY_3D_H
-#define VIRTUAL_BODY_3D_H
+#ifndef LUX_VIRTUAL_BODY_3D_H
+#define LUX_VIRTUAL_BODY_3D_H
 
 #include "../shared.h"
 
@@ -11,11 +11,7 @@
 class VirtualBody3D : public PhysicsBody3D {
 	GDCLASS(VirtualBody3D, PhysicsBody3D);
 
-public: // clang-format off
-	static constexpr int32_t	 action_count{ 10 };
-	static constexpr const char* action_list[action_count]{ 
-		"forward", "backward", "left", "right", "jump", "duck",
-		"cam_up", "cam_down", "cam_left", "cam_right"}; // clang-format on
+public:
 	static constexpr real_t input_motion_mod{ 0.001f * (Math_PI / 180.0f) };
 
 	static inline const Vector3 default_size{ 0.8f, 1.75f, 0.8f };
@@ -29,6 +25,8 @@ public: // clang-format off
 	static constexpr real_t mv_friction{ 6.0f };
 	static constexpr real_t mv_gravity{ 25.0f };
 	static constexpr real_t mv_jump{ 8.4375f };
+
+	static constexpr real_t mv_step_height{ 0.5625 };
 
 	enum Flags {
 		PlayerControlled = 1,
@@ -45,8 +43,7 @@ public: // clang-format off
 	struct InputCmd {
 		Vector2 dir{};	  // move dir
 		Vector2 motion{}; // camera motion
-		// HashMap<StringName, double> actions{};
-		Array actions{};
+		real_t	upmove{ 0.0f };
 	};
 
 	struct CameraModel {
@@ -76,10 +73,19 @@ public: // clang-format off
 
 		real_t flag_time{ 0.0f };
 		real_t duck_time{ 0.0f };
-		real_t cl_time{ 0.0f };
 
 		uint32_t surface_flags{ 0 };
 		uint8_t	 water_level{ 0 };
+	};
+
+	struct Trace {
+		Vector3 position;
+		Vector3 normal{ 0.0f, 1.0f, 0.0f };
+		real_t	fraction[2]{ 1.0f, 1.0f };
+
+		Trace(Vector3 p_pos) : position(p_pos) {};
+		Trace(Vector3 p_pos, Vector3 p_normal, real_t p_safe_fraction, real_t p_unsafe_fraction) :
+			position(p_pos), normal(p_normal), fraction{ p_safe_fraction, p_unsafe_fraction } {};
 	};
 
 	VirtualBody3D();
@@ -105,6 +111,9 @@ public: // clang-format off
 	real_t get_duck_time() const;
 	real_t get_flag_time() const;
 
+	void   set_msens(real_t p_msens);
+	real_t get_msens() const;
+
 	void	set_view_angles(const Vector3& p_angles);
 	Vector3 get_view_angles() const;
 
@@ -124,18 +133,19 @@ public: // clang-format off
 	void apply_gravity(double p_delta);
 
 	bool check_duck();
-	bool check_unduck();
-	bool check_jump();
-
 	void duck();
+
+	bool check_unduck();
 	void unduck();
+
+	bool check_jump();
 	void jump();
 
 	void check_platform();
 	void check_surface_control();
 	void check_water_level();
 
-	void move_and_slide(double p_delta);
+	bool move_and_slide(double p_delta);
 
 	// Internal
 
@@ -148,7 +158,7 @@ public: // clang-format off
 	void update(double p_delta);
 	void update_physics(double p_delta);
 	void update_timers(double p_delta);
-	void update_frame_input(double p_delta);
+	void update_frame_input();
 
 protected:
 	static void _bind_methods();
@@ -172,6 +182,10 @@ private:
 	uint64_t flags{ 0 };
 
 	real_t msens{ 75.0f };
+
+	bool trace_step(Vector3 p_in_vel, Vector3& p_out_vel, double p_delta);
+
+	Trace cast_trace(Vector3 p_from, Vector3 p_to);
 };
 
 #endif

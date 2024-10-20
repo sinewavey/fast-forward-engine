@@ -17,7 +17,7 @@ void MapInstance::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_worldspawn", "p_worldspawn"), &MapInstance::set_worldspawn);
 	ClassDB::bind_method(D_METHOD("get_worldspawn"), &MapInstance::get_worldspawn);
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "worldspawn", PROPERTY_HINT_NODE_TYPE, "worldspawn"),
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "worldspawn", PROPERTY_HINT_NODE_TYPE, "Worldspawn"),
 		"set_worldspawn",
 		"get_worldspawn");
 

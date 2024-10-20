@@ -1,20 +1,8 @@
 #include "virtual_body_3d.h"
 
-void VirtualBody3D::update_frame_input(double p_delta) {
-	if (get_tree()->is_paused()) {
-		return;
-	}
-
-	input_cmd.dir = system_input->get_vector("left", "right", "forward", "backward");
-
-	for (auto& it : input_cmd.actions) {
-		if (system_input->is_action_pressed(it.key)) {
-			it.value += p_delta;
-		} else {
-			it.value = 0.0;
-		}
-		print_line(it.key, it.value);
-	}
+void VirtualBody3D::update_frame_input() {
+	input_cmd.dir	 = system_input->get_vector("left", "right", "forward", "backward");
+	input_cmd.upmove = system_input->get_axis("duck", "jump");
 }
 
 void VirtualBody3D::input(const Ref<InputEvent>& p_event) {
