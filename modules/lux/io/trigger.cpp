@@ -4,8 +4,8 @@ void Trigger::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("used", PropertyInfo(Variant::OBJECT, "activator")));
 
 	ClassDB::bind_method(
-		D_METHOD("_func_godot_apply_properties", "properties"), &Trigger::apply_properties);
-	ClassDB::bind_method(D_METHOD("_func_godot_build_complete"), &Trigger::build_complete);
+		D_METHOD(LUX_APPLY_PROPERTIES, "properties"), &Trigger::apply_properties);
+	ClassDB::bind_method(D_METHOD(LUX_BUILD_COMPLETE), &Trigger::build_complete);
 
 	ClassDB::bind_method(D_METHOD("set_target", "p_target"), &Trigger::set_target);
 	ClassDB::bind_method(D_METHOD("set_target_func", "p_target_func"), &Trigger::set_target_func);

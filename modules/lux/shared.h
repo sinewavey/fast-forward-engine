@@ -31,6 +31,9 @@
 
 #include "scene/3d/visual_instance_3d.h"
 
+#define LUX_APPLY_PROPERTIES "_func_godot_apply_properties"
+#define LUX_BUILD_COMPLETE	 "_func_godot_build_complete"
+
 namespace Lux {
 
 enum SurfaceFlag : uint8_t {
@@ -58,6 +61,12 @@ enum TriggerState {
 	TRIGGER_WAIT,
 };
 
+enum MoverState {
+	MOVER_IDLE,
+	MOVER_ACTIVE,
+	MOVER_WAIT,
+};
+
 enum LockFlag : uint8_t {
 	LOCK_OPEN	= 0,
 	LOCK_GREEN	= 1,
@@ -65,12 +74,12 @@ enum LockFlag : uint8_t {
 	LOCK_PURPLE = 1 << 2,
 };
 
-inline static const Vector3 vec3_right{ 1.0f, 0.0f, 0.0f };
-inline static const Vector3 vec3_up{ 0.0f, 1.0f, 0.0f };
-inline static const Vector3 vec3_fwd{ 0.0f, 0.0f, -1.0f };
+inline static const Vector3 VEC3_RIGHT{ 1.0f, 0.0f, 0.0f };
+inline static const Vector3 VEC3_UP{ 0.0f, 1.0f, 0.0f };
+inline static const Vector3 VEC3_FWD{ 0.0f, 0.0f, -1.0f };
 
-static constexpr real_t m_pi{ Math_PI };
-static constexpr real_t m_eta{ Math_PI * 0.5 };
+static constexpr real_t M_PI{ Math_PI };
+static constexpr real_t M_ETA{ Math_PI * 0.5 };
 
 namespace Concepts {
 
@@ -79,10 +88,13 @@ concept node_derived = std::is_base_of_v<Node, T>;
 
 } // namespace Concepts
 
-template <Concepts::node_derived T>
-static auto child_view(T* p_node) {
-	return std::views::iota(0, p_node->get_child_count()) |
-		std::views::transform([p_node](int i) -> Node* { return p_node->get_child(i); });
+// Math
+
+template <typename T>
+	requires std::is_floating_point_v<T>
+static constexpr T spline_fraction(T value, T scale) {
+	value *= scale;
+	return static_cast<T>(3.0) * (value * value) - static_cast<T>(2.0) * (value * value * value);
 }
 
 static Vector3 clip(const Vector3& p_in, const Vector3& p_normal, real_t p_adj = 1.0f) {
@@ -94,6 +106,16 @@ static Vector3 clip(const Vector3& p_in, const Vector3& p_normal, real_t p_adj =
 	}
 	return (p_in - (p_normal * bump));
 }
+
+static Vector3 vec_xz(const Vector3& p_vec) {
+	return Vector3{ p_vec.x, 0.0f, p_vec.z };
+}
+
+static Vector3 vec_y(const Vector3& p_vec) {
+	return Vector3{ 0.0f, p_vec.y, 0.0f };
+}
+
+// Tools
 
 static ObjectID get_id_or_null(Node* p_node) {
 	return p_node ? p_node->get_instance_id() : ObjectID();
@@ -111,6 +133,12 @@ static T* instance_from_id(ObjectID p_id) {
 template <typename T>
 static T* instance_from_path(Node* p_from, NodePath p_path) {
 	return Object::cast_to<T>(p_from->get_node_or_null(p_path));
+}
+
+template <Concepts::node_derived T>
+static auto child_view(T* p_node) {
+	return std::views::iota(0, p_node->get_child_count()) |
+		std::views::transform([p_node](int i) -> Node* { return p_node->get_child(i); });
 }
 
 namespace IO {
@@ -155,15 +183,8 @@ static void apply_properties(Node* p_node, const Dictionary& p_properties) {
 
 		p_node->set(key, value, &success);
 
-		// if (success) {
-		// print_line(p_node->get_name(), "set:", key, value);
-		// } else {
 		if (!success) {
 			p_node->set("metadata/" + key.stringify(), value, &success);
-			// if (success) {
-			// print_line(p_node->get_name(), "set key metadata:", key, value);
-			// } else
-			// print_line(p_node->get_name(), "could not set key:", key);
 		}
 
 		if (key.operator==("targetname")) {
@@ -200,7 +221,6 @@ static void finalize_entity(Node* p_node) {
 }
 
 } // namespace FGD
-
 
 } // namespace Lux
 

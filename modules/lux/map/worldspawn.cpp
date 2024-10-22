@@ -2,8 +2,8 @@
 
 void Worldspawn::_bind_methods() {
 	ClassDB::bind_method(
-		D_METHOD("_func_godot_apply_properties", "properties"), &Worldspawn::apply_properties);
-	ClassDB::bind_method(D_METHOD("_func_godot_build_complete"), &Worldspawn::build_complete);
+		D_METHOD(LUX_APPLY_PROPERTIES, "properties"), &Worldspawn::apply_properties);
+	ClassDB::bind_method(D_METHOD(LUX_BUILD_COMPLETE), &Worldspawn::build_complete);
 }
 
 void Worldspawn::apply_properties(const Dictionary& p_properties) {

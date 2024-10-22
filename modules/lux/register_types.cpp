@@ -9,6 +9,7 @@
 
 #include "physics/virtual_body_3d.h"
 #include "physics/world_geometry.h"
+#include "physics/platform_body_3d.h"
 
 #include "io/trigger.h"
 #include "io/counter.h"
@@ -31,6 +32,8 @@ void initialize_lux_module(ModuleInitializationLevel p_level) {
 	GDREGISTER_CLASS(Counter);
 	GDREGISTER_CLASS(Trigger);
 	GDREGISTER_CLASS(TriggerForce);
+
+	GDREGISTER_CLASS(PlatformBody3D);
 
 	GDREGISTER_CLASS(VirtualBody3D);
 

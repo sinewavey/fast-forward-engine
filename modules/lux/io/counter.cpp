@@ -14,9 +14,8 @@ void Counter::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_value"), &Counter::get_value);
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "value"), "set_value", "get_value");
 
-	ClassDB::bind_method(
-		D_METHOD("_func_godot_apply_properties", "properties"), &Counter::apply_properties);
-	ClassDB::bind_method(D_METHOD("_func_godot_build_complete"), &Counter::build_complete);
+	ClassDB::bind_method(D_METHOD(LUX_APPLY_PROPERTIES, "properties"), &Counter::apply_properties);
+	ClassDB::bind_method(D_METHOD(LUX_BUILD_COMPLETE), &Counter::build_complete);
 	ClassDB::bind_method(D_METHOD("use", "activator"), &Counter::use);
 }
 

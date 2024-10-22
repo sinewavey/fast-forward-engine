@@ -7,8 +7,8 @@ WorldGeometry::WorldGeometry() {
 
 void WorldGeometry::_bind_methods() {
 	ClassDB::bind_method(
-		D_METHOD("_func_godot_apply_properties", "properties"), &WorldGeometry::apply_properties);
-	ClassDB::bind_method(D_METHOD("_func_godot_build_complete"), &WorldGeometry::build_complete);
+		D_METHOD(LUX_APPLY_PROPERTIES, "properties"), &WorldGeometry::apply_properties);
+	ClassDB::bind_method(D_METHOD(LUX_BUILD_COMPLETE), &WorldGeometry::build_complete);
 
 	ClassDB::bind_method(
 		D_METHOD("set_surface_flags", "p_surface_flags"), &WorldGeometry::set_surface_flags);
@@ -36,11 +36,11 @@ void WorldGeometry::build_complete() {
 	Lux::FGD::finalize_entity(this);
 }
 
-void WorldGeometry::set_surface_flags(BitField<Lux::SurfaceFlag> p_flags) {
+void WorldGeometry::set_surface_flags(uint32_t p_flags) {
 	surface_flags = p_flags;
 }
 
-BitField<Lux::SurfaceFlag> WorldGeometry::get_surface_flags() const {
+uint32_t WorldGeometry::get_surface_flags() const {
 	return surface_flags;
 }
 
