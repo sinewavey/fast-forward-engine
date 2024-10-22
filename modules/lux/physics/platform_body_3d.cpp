@@ -22,6 +22,15 @@ void PlatformBody3D::_bind_methods() {
 	ClassDB::bind_method(
 		D_METHOD(LUX_APPLY_PROPERTIES, "properties"), &PlatformBody3D::apply_properties);
 	ClassDB::bind_method(D_METHOD(LUX_BUILD_COMPLETE), &PlatformBody3D::build_complete);
+
+	ClassDB::bind_method(D_METHOD("use", "activator"), &PlatformBody3D::use);
+	ClassDB::bind_method(D_METHOD("toggle"), &PlatformBody3D::toggle);
+
+	ClassDB::bind_method(D_METHOD("move_forward"), &PlatformBody3D::move_forward);
+	ClassDB::bind_method(D_METHOD("move_reverse"), &PlatformBody3D::move_reverse);
+
+	ClassDB::bind_method(D_METHOD("move_to_move_to_progress", "move_to_progress"),
+		&PlatformBody3D::move_to_progress);
 }
 
 PlatformBody3D::PlatformBody3D() {

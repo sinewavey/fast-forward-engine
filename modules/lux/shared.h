@@ -145,8 +145,13 @@ namespace IO {
 
 static void
 use_target(StringName p_target, StringName p_func = "use", Node* p_activator = nullptr) {
+	if (p_func.is_empty()) {
+		p_func = "use";
+	}
+
 	List<Node*> nodes;
 	SceneTree::get_singleton()->get_nodes_in_group(p_target, &nodes);
+
 	for (auto node : nodes) {
 		if (node->has_method(p_func)) {
 			node->call(p_func, p_activator);
