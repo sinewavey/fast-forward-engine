@@ -16,19 +16,26 @@ public:
 	void set_value(int p_value) { value = p_value; }
 	int	 get_value() const { return value; }
 
+	void set_initial_value(int p_value) { initial_value = p_value; }
+	int	 get_initial_value() const { return initial_value; }
+
 	void apply_properties(const Dictionary& p_properties);
 	void build_complete();
 
 	void use(Node* p_activator);
 
+	void reset();
+
 protected:
 	static void _bind_methods();
-
+	
 private:
 	StringName target{};
 	StringName target_func{ "use" };
 	// arguments for func: string bool int float. value? how do expose.
-	int		   value = 0;
+	int value{};
+	int initial_value{};
+	uint32_t flags{};
 };
 
 #endif

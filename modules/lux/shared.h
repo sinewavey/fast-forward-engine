@@ -30,6 +30,7 @@
 #include "scene/3d/physics/collision_shape_3d.h"
 
 #include "scene/3d/visual_instance_3d.h"
+#include "scene/3d/mesh_instance_3d.h"
 
 #define LUX_APPLY_PROPERTIES "_func_godot_apply_properties"
 #define LUX_BUILD_COMPLETE	 "_func_godot_build_complete"
@@ -53,6 +54,7 @@ enum TriggerFlag : uint8_t {
 	TRIGGER_ON_EXIT	  = 1 << 4,
 	TRIGGER_ON_PLAYER = 1 << 5,
 	TRIGGER_ON_ENEMY  = 1 << 6,
+	TRIGGER_ON_ACTOR  = TRIGGER_ON_PLAYER | TRIGGER_ON_ENEMY
 };
 
 enum TriggerState {
@@ -90,20 +92,16 @@ static constexpr real_t M_ETA{ Math_PI * 0.5 };
 namespace Concepts {
 
 template <typename T>
+concept obj_derived = std::is_base_of_v<Object, T>;
+
+template <typename T>
 concept node_derived = std::is_base_of_v<Node, T>;
 
 } // namespace Concepts
 
 // Math
 
-template <typename T>
-	requires std::is_floating_point_v<T>
-static constexpr T spline_fraction(T value, T scale) {
-	value *= scale;
-	return static_cast<T>(3.0) * (value * value) - static_cast<T>(2.0) * (value * value * value);
-}
-
-static Vector3 clip(const Vector3& p_in, const Vector3& p_normal, real_t p_adj = 1.0f) {
+_FORCE_INLINE_ Vector3 clip(const Vector3& p_in, const Vector3& p_normal, real_t p_adj = 1.0f) {
 	real_t bump = p_in.dot(p_normal);
 	if (bump < 0.0) {
 		bump *= p_adj;
@@ -113,144 +111,55 @@ static Vector3 clip(const Vector3& p_in, const Vector3& p_normal, real_t p_adj =
 	return (p_in - (p_normal * bump));
 }
 
-static Vector3 vec_xz(const Vector3& p_vec) {
+_FORCE_INLINE_ Vector3 vec_xz(const Vector3& p_vec) {
 	return Vector3{ p_vec.x, 0.0f, p_vec.z };
 }
 
-static Vector3 vec_y(const Vector3& p_vec) {
+_FORCE_INLINE_ Vector3 vec_y(const Vector3& p_vec) {
 	return Vector3{ 0.0f, p_vec.y, 0.0f };
+}
+
+_FORCE_INLINE_ real_t spline_fraction(real_t value, real_t scale) {
+	value *= scale;
+	return (3.0f) * (value * value) - (2.0f) * (value * value * value);
+}
+
+_FORCE_INLINE_ double spline_fraction(double value, double scale) {
+	value *= scale;
+	return (3.0) * (value * value) - (2.0) * (value * value * value);
 }
 
 // Tools
 
-static ObjectID get_id_or_null(Node* p_node) {
-	return p_node ? p_node->get_instance_id() : ObjectID();
-}
-
-static NodePath get_path_or_null(Node* p_node) {
-	return p_node ? p_node->get_path() : NodePath();
-}
-
-template <typename T>
-static T* instance_from_id(ObjectID p_id) {
+template <Concepts::obj_derived T>
+T* instance_from_id(ObjectID p_id) {
 	return Object::cast_to<T>(ObjectDB::get_instance(p_id));
 }
 
-template <typename T>
-static T* instance_from_path(Node* p_from, NodePath p_path) {
+template <Concepts::node_derived T>
+T* instance_from_path(Node* p_from, NodePath p_path) {
 	return Object::cast_to<T>(p_from->get_node_or_null(p_path));
 }
 
 template <Concepts::node_derived T>
-static auto child_view(T* p_node) {
+auto child_view(T* p_node) {
 	return std::views::iota(0, p_node->get_child_count()) |
 		std::views::transform([p_node](int i) -> Node* { return p_node->get_child(i); });
 }
 
-static void add_child_persist(Node* p_parent,
-	Node*							p_child,
-	bool							p_readable_name = false,
-	Lux::AddChildOwner p_owner						= Lux::OWNER_ROOT) {
-
-	// clang-format off
-	ERR_FAIL_COND_MSG(p_parent == nullptr, "Cannot add child to null parent node.");
-	ERR_FAIL_COND_MSG(p_child == nullptr, "Cannot add null child node.");
-	ERR_FAIL_COND_MSG(!p_parent->is_inside_tree() && p_owner == Lux::OWNER_ROOT, "Cannot add child to root node outside tree.");
-
-	p_parent->add_child(p_child, p_readable_name);
-	auto fnc = [&](Node* n) { p_child->set_owner(n); };
-
-	switch (p_owner) { 
-		case Lux::OWNER_ROOT: 			{ fnc(SceneTree::get_singleton()->get_edited_scene_root()); break; 	}
-		case Lux::OWNER_PARENT_OWNER: 	{ fnc(p_parent->get_owner()); break; 								}
-		case Lux::OWNER_PARENT: 		{ fnc(p_parent); break; 											}
-	} // clang-format on
-}
-
-namespace IO {
-
-static void
-use_target(StringName p_target, StringName p_func = "use", Node* p_activator = nullptr) {
-	if (p_target.is_empty()) {
-		return;
-	}
-
-	if (p_func.is_empty()) {
-		p_func = "use";
-	}
-
-	SceneTree::get_singleton()->call_group(p_target, p_func, p_activator);
-}
-
-static void use_target(StringName p_target, StringName p_func, Node* p_activator, Array p_args) {
-	if (p_target.is_empty()) {
-		return;
-	}
-
-	p_args.push_front(p_activator);
-
-	if (p_func.is_empty()) {
-		p_func = "use";
-	}
-
-	SceneTree::get_singleton()->call_group(p_target, p_func, p_args);
-}
-
-} // namespace IO
+ObjectID get_id_or_null(Node* p_node);
+NodePath get_path_or_null(Node* p_node);
+void	 add_child_persist(Node* p_parent,
+		Node*					 p_child,
+		bool					 p_readable_name = false,
+		Lux::AddChildOwner p_owner				 = Lux::OWNER_ROOT);
 
 namespace FGD {
 
-static void apply_properties(Node* p_node, const Dictionary& p_properties) {
-	for (Variant key : p_properties.keys()) {
-		if (!key.is_string()) {
-			continue;
-		}
-
-		if (key.operator==("classname") || key.operator==("origin")) {
-			continue;
-		}
-
-		auto value	 = p_properties[key];
-		bool success = false;
-
-		p_node->set(key, value, &success);
-
-		if (!success) {
-			p_node->set("metadata/" + key.stringify(), value, &success);
-		}
-
-		if (key.operator==("targetname")) {
-			StringName target_name{ p_properties.get("targetname", "") };
-			if (!target_name.is_empty()) {
-				p_node->add_to_group(target_name, true);
-			}
-			continue;
-		}
-	}
-}
-
-static void finalize_mesh_children(Node* p_parent) {
-	int cs_value = p_parent->get_meta("_cs", 1);
-
-	for (int i = 0; i < p_parent->get_child_count(); i++) {
-		auto child = p_parent->get_child(i);
-		if (Object::cast_to<GeometryInstance3D>(child) != nullptr) {
-			child->call(
-				"set_cast_shadows_setting", GeometryInstance3D::ShadowCastingSetting(cs_value));
-		}
-	}
-}
-
-static void finalize_entity(Node* p_node) {
-	List<StringName> md{};
-	p_node->get_meta_list(&md);
-
-	finalize_mesh_children(p_node);
-
-	// for (auto meta : md) {
-	// 	p_node->remove_meta(meta);
-	// }
-}
+void apply_properties(Node* p_node, const Dictionary& p_properties);
+void set_targetname(Node* p_node, const StringName& p_name);
+void finalize_entity(Node* p_node);
+void finalize_mesh_children(Node* p_parent);
 
 } // namespace FGD
 

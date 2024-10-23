@@ -64,6 +64,18 @@ uint32_t PlatformBody3D::get_surface_flags() const {
 
 void PlatformBody3D::apply_properties(const Dictionary& p_properties) {
 	Lux::FGD::apply_properties(this, p_properties);
+
+	auto p	= memnew(Path3D);
+	auto pf = memnew(PathFollow3D);
+
+	Lux::add_child_persist(this, p, true);
+	Lux::add_child_persist(p, pf, true);
+
+	p->set_as_top_level(true);
+	pf->set_as_top_level(true);
+
+	set_path_3d(p);
+	set_path_follower(pf);
 }
 
 void PlatformBody3D::build_complete() {
@@ -71,6 +83,7 @@ void PlatformBody3D::build_complete() {
 }
 
 void PlatformBody3D::use(Node* p_activator) {
+	print_line(GDVIRTUAL_IS_OVERRIDDEN(_use) ? "PlatformBody3D::use (VIRTUAL CALL)" : "PlatformBody3D::use");
 	if (GDVIRTUAL_IS_OVERRIDDEN(_use)) {
 		GDVIRTUAL_CALL(_use, p_activator);
 	} else {
@@ -90,29 +103,4 @@ void PlatformBody3D::move_to_progress(float p_progress) {
 }
 
 void PlatformBody3D::_notification(int p_what) {
-	switch (p_what) {
-		case NOTIFICATION_READY:
-			{
-				auto p	= memnew(Path3D);
-				auto pf = memnew(PathFollow3D);
-
-				// auto fnc = [&](Node3D* n) {
-				// 	add_child(n, true);
-				// 	n->set_owner(get_tree()->get_edited_scene_root());
-				// 	n->set_as_top_level(true);
-				// };
-
-				// fnc(p);
-				// fnc(pf);
-
-				set_path_3d(p);
-				set_path_follower(pf);
-				break;
-			}
-		case NOTIFICATION_PREDELETE:
-			{
-				propagate_call("queue_free");
-				break;
-			}
-	}
 }

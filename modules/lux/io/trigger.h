@@ -35,7 +35,7 @@ private:
 	StringName target{};
 	StringName target_func{ "use" };
 
-	BitField<Lux::TriggerFlag> flags{ 0 };
+	BitField<Lux::TriggerFlag> flags{ Lux::TRIGGER_ON_ENTRY | Lux::TRIGGER_ON_ACTOR };
 	Lux::TriggerState		   state{ Lux::TRIGGER_READY };
 };
 

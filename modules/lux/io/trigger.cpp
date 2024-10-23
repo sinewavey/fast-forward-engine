@@ -3,8 +3,7 @@
 void Trigger::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("used", PropertyInfo(Variant::OBJECT, "activator")));
 
-	ClassDB::bind_method(
-		D_METHOD(LUX_APPLY_PROPERTIES, "properties"), &Trigger::apply_properties);
+	ClassDB::bind_method(D_METHOD(LUX_APPLY_PROPERTIES, "properties"), &Trigger::apply_properties);
 	ClassDB::bind_method(D_METHOD(LUX_BUILD_COMPLETE), &Trigger::build_complete);
 
 	ClassDB::bind_method(D_METHOD("set_target", "p_target"), &Trigger::set_target);
@@ -101,7 +100,7 @@ void Trigger::build_complete() {
 }
 
 void Trigger::use(Node* p_activator) {
-	Lux::IO::use_target(target, target_func, this);
+	SceneTree::get_singleton()->call_group(target, target_func, this);
 }
 
 VARIANT_BITFIELD_CAST(Lux::TriggerFlag);

@@ -14,6 +14,11 @@ void Counter::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_value"), &Counter::get_value);
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "value"), "set_value", "get_value");
 
+	ClassDB::bind_method(D_METHOD("set_initial_value", "p_value"), &Counter::set_value);
+	ClassDB::bind_method(D_METHOD("get_initial_value"), &Counter::get_value);
+	ADD_PROPERTY(
+		PropertyInfo(Variant::INT, "initial_value"), "set_initial_value", "get_initial_value");
+
 	ClassDB::bind_method(D_METHOD(LUX_APPLY_PROPERTIES, "properties"), &Counter::apply_properties);
 	ClassDB::bind_method(D_METHOD(LUX_BUILD_COMPLETE), &Counter::build_complete);
 	ClassDB::bind_method(D_METHOD("use", "activator"), &Counter::use);
@@ -21,15 +26,16 @@ void Counter::_bind_methods() {
 
 void Counter::apply_properties(const Dictionary& p_properties) {
 	Lux::FGD::apply_properties(this, p_properties);
-	if (p_properties.has("value")) {
-		set_value(p_properties.get("value", int()));
-	}
 }
 
 void Counter::build_complete() {
 	Lux::FGD::finalize_entity(this);
+	set_initial_value(value);
 }
 
 void Counter::use(Node* p_activator) {
-	Lux::IO::use_target(target, target_func, this);
+	value -= 1;
+	if (value <= 0) {
+		SceneTree::get_singleton()->call_group(target, target_func, this);
+	}
 }
