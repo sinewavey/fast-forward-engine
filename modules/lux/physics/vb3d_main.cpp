@@ -202,9 +202,9 @@ void VirtualBody3D::check_surface_control() {
 		if (!i) {
 			phys.normal = n;
 		}
-		
+
 		if (phys.velocity.dot(n) > 3.2f) {
-			continue;	
+			continue;
 		}
 
 		if (n[1] >= 0.701) {
@@ -399,8 +399,8 @@ void VirtualBody3D::update_physics(double p_delta) {
 	jump(); // mama i am sorry this is Here
 
 	// Platform velocity applies here
-	print_line(
-		"Ended frame", flags & SurfaceControl ? "walk" : "air", phys.velocity.length() * 32.0f);
+	// print_line(
+	// 	"Ended frame", flags & SurfaceControl ? "walk" : "air", phys.velocity.length() * 32.0f);
 }
 
 void VirtualBody3D::ensure_interpolation_update() {

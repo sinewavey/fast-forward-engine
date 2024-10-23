@@ -1,6 +1,8 @@
 #include "platform_body_3d.h"
 
 void PlatformBody3D::_bind_methods() {
+	GDVIRTUAL_BIND(_use, "activator");
+
 	ClassDB::bind_method(D_METHOD("set_path_3d", "p_path_3d"), &PlatformBody3D::set_path_3d);
 	ClassDB::bind_method(D_METHOD("get_path_3d"), &PlatformBody3D::get_path_3d);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "path_3d", PROPERTY_HINT_NODE_TYPE, "Path3D"),
@@ -69,7 +71,11 @@ void PlatformBody3D::build_complete() {
 }
 
 void PlatformBody3D::use(Node* p_activator) {
-	toggle();
+	if (GDVIRTUAL_IS_OVERRIDDEN(_use)) {
+		GDVIRTUAL_CALL(_use, p_activator);
+	} else {
+		toggle();
+	}
 }
 
 void PlatformBody3D::move_forward() {
@@ -90,17 +96,17 @@ void PlatformBody3D::_notification(int p_what) {
 				auto p	= memnew(Path3D);
 				auto pf = memnew(PathFollow3D);
 
-				auto fnc = [&](Node* n) {
-					add_child(n, true);
-					n->set_owner(get_tree()->get_edited_scene_root());
-				};
+				// auto fnc = [&](Node3D* n) {
+				// 	add_child(n, true);
+				// 	n->set_owner(get_tree()->get_edited_scene_root());
+				// 	n->set_as_top_level(true);
+				// };
 
-				fnc(p);
-				fnc(pf);
+				// fnc(p);
+				// fnc(pf);
 
 				set_path_3d(p);
 				set_path_follower(pf);
-
 				break;
 			}
 		case NOTIFICATION_PREDELETE:

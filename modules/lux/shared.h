@@ -74,6 +74,12 @@ enum LockFlag : uint8_t {
 	LOCK_PURPLE = 1 << 2,
 };
 
+enum AddChildOwner {
+	OWNER_ROOT,
+	OWNER_PARENT_OWNER,
+	OWNER_PARENT,
+};
+
 inline static const Vector3 VEC3_RIGHT{ 1.0f, 0.0f, 0.0f };
 inline static const Vector3 VEC3_UP{ 0.0f, 1.0f, 0.0f };
 inline static const Vector3 VEC3_FWD{ 0.0f, 0.0f, -1.0f };
@@ -141,32 +147,53 @@ static auto child_view(T* p_node) {
 		std::views::transform([p_node](int i) -> Node* { return p_node->get_child(i); });
 }
 
+static void add_child_persist(Node* p_parent,
+	Node*							p_child,
+	bool							p_readable_name = false,
+	Lux::AddChildOwner p_owner						= Lux::OWNER_ROOT) {
+
+	// clang-format off
+	ERR_FAIL_COND_MSG(p_parent == nullptr, "Cannot add child to null parent node.");
+	ERR_FAIL_COND_MSG(p_child == nullptr, "Cannot add null child node.");
+	ERR_FAIL_COND_MSG(!p_parent->is_inside_tree() && p_owner == Lux::OWNER_ROOT, "Cannot add child to root node outside tree.");
+
+	p_parent->add_child(p_child, p_readable_name);
+	auto fnc = [&](Node* n) { p_child->set_owner(n); };
+
+	switch (p_owner) { 
+		case Lux::OWNER_ROOT: 			{ fnc(SceneTree::get_singleton()->get_edited_scene_root()); break; 	}
+		case Lux::OWNER_PARENT_OWNER: 	{ fnc(p_parent->get_owner()); break; 								}
+		case Lux::OWNER_PARENT: 		{ fnc(p_parent); break; 											}
+	} // clang-format on
+}
+
 namespace IO {
 
 static void
 use_target(StringName p_target, StringName p_func = "use", Node* p_activator = nullptr) {
+	if (p_target.is_empty()) {
+		return;
+	}
+
 	if (p_func.is_empty()) {
 		p_func = "use";
 	}
 
-	List<Node*> nodes;
-	SceneTree::get_singleton()->get_nodes_in_group(p_target, &nodes);
-
-	for (auto node : nodes) {
-		if (node->has_method(p_func)) {
-			node->call(p_func, p_activator);
-		}
-	}
+	SceneTree::get_singleton()->call_group(p_target, p_func, p_activator);
 }
 
-static void use_target(StringName p_target, StringName p_func, Array p_args = {}) {
-	List<Node*> nodes;
-	SceneTree::get_singleton()->get_nodes_in_group(p_target, &nodes);
-	for (auto node : nodes) {
-		if (node->has_method(p_func)) {
-			node->callv(p_func, p_args);
-		}
+static void use_target(StringName p_target, StringName p_func, Node* p_activator, Array p_args) {
+	if (p_target.is_empty()) {
+		return;
 	}
+
+	p_args.push_front(p_activator);
+
+	if (p_func.is_empty()) {
+		p_func = "use";
+	}
+
+	SceneTree::get_singleton()->call_group(p_target, p_func, p_args);
 }
 
 } // namespace IO

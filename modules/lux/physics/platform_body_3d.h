@@ -22,7 +22,7 @@ public:
 	void apply_properties(const Dictionary& p_properties);
 	void build_complete();
 
-	void use(Node* p_activator);
+	virtual void use(Node* p_activator);
 
 	void move_forward();
 	void move_reverse();
@@ -36,6 +36,8 @@ public:
 protected:
 	static void _bind_methods();
 	void		_notification(int p_what);
+
+	GDVIRTUAL1(_use, Node *)
 
 private:
 	ObjectID path_follower{};
