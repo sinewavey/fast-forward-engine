@@ -815,7 +815,7 @@ else:
     if cc_version_major < 16:
         print_warning("Visual Studio 2017 cannot specify a C-Standard.")
     else:
-        env.Prepend(CFLAGS=["/std:c11"])
+        env.Prepend(CFLAGS=["/std:c17"])
     # MSVC is non-conforming with the C++ standard by default, so we enable more conformance.
     # Note that this is still not complete conformance, as certain Windows-related headers
     # don't compile under complete conformance.
