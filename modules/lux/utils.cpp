@@ -29,6 +29,13 @@ void Lux::add_child_persist(Node* p_parent,
 	} // clang-format on
 }
 
+void Lux::add_sibling_persist(Node* p_caller, Node* p_new, bool p_readable_name) {
+	ERR_FAIL_COND_MSG(p_caller == nullptr, "Cannot add sibling to null node.");
+	ERR_FAIL_COND_MSG(p_new == nullptr, "Cannot add null sibling node.");
+	p_caller->add_sibling(p_new, p_readable_name);
+	p_new->set_owner(SceneTree::get_singleton()->get_edited_scene_root());
+}
+
 void Lux::FGD::set_targetname(Node* p_node, const StringName& p_name) {
 	if (p_name.is_empty()) {
 		StringName val = p_node->get_meta("targetname", StringName());

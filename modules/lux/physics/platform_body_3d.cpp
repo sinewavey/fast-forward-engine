@@ -1,7 +1,18 @@
 #include "platform_body_3d.h"
+#include "scene/3d/path_3d.h"
+#include "scene/3d/remote_transform_3d.h"
 
 void PlatformBody3D::_bind_methods() {
 	GDVIRTUAL_BIND(_use, "activator");
+
+	ClassDB::bind_method(D_METHOD("set_remote_transform", "p_remote_transform"),
+		&PlatformBody3D::set_remote_transform);
+	ClassDB::bind_method(D_METHOD("get_remote_transform"), &PlatformBody3D::get_remote_transform);
+	ADD_PROPERTY(
+		PropertyInfo(
+			Variant::OBJECT, "remote_transform", PROPERTY_HINT_NODE_TYPE, "RemoteTransform3D"),
+		"set_remote_transform",
+		"get_remote_transform");
 
 	ClassDB::bind_method(D_METHOD("set_path_3d", "p_path_3d"), &PlatformBody3D::set_path_3d);
 	ClassDB::bind_method(D_METHOD("get_path_3d"), &PlatformBody3D::get_path_3d);
@@ -54,6 +65,14 @@ PathFollow3D* PlatformBody3D::get_path_follower() const {
 	return Lux::instance_from_id<PathFollow3D>(path_follower);
 }
 
+void PlatformBody3D::set_remote_transform(RemoteTransform3D* p_node) {
+	remote_transform = Lux::get_id_or_null(p_node);
+}
+
+RemoteTransform3D* PlatformBody3D::get_remote_transform() const {
+	return Lux::instance_from_id<RemoteTransform3D>(remote_transform);
+}
+
 void PlatformBody3D::set_surface_flags(uint32_t p_flags) {
 	surface_flags = p_flags;
 }
@@ -65,14 +84,26 @@ uint32_t PlatformBody3D::get_surface_flags() const {
 void PlatformBody3D::apply_properties(const Dictionary& p_properties) {
 	Lux::FGD::apply_properties(this, p_properties);
 
-	auto p	= memnew(Path3D);
-	auto pf = memnew(PathFollow3D);
 
-	Lux::add_child_persist(this, p, true);
+	auto p				  = memnew(Path3D);
+	auto pf				  = memnew(PathFollow3D);
+	auto remote_transform = memnew(RemoteTransform3D);
+
+	set_process_mode(PROCESS_MODE_PAUSABLE);
+	pf->set_process_mode(PROCESS_MODE_PAUSABLE);
+
+	p->set_position(get_position());
+
+	// TODO: set according to spawnflags
+	pf->set_rotation_mode(PathFollow3D::RotationMode::ROTATION_NONE);
+	pf->set_tilt_enabled(false);
+	pf->set_loop(false);
+
+	Lux::add_sibling_persist(get_parent(), p, true);
 	Lux::add_child_persist(p, pf, true);
+	Lux::add_child_persist(pf, remote_transform, true);
 
-	p->set_as_top_level(true);
-	pf->set_as_top_level(true);
+	remote_transform->set_remote_node(get_path());
 
 	set_path_3d(p);
 	set_path_follower(pf);
@@ -83,7 +114,8 @@ void PlatformBody3D::build_complete() {
 }
 
 void PlatformBody3D::use(Node* p_activator) {
-	print_line(GDVIRTUAL_IS_OVERRIDDEN(_use) ? "PlatformBody3D::use (VIRTUAL CALL)" : "PlatformBody3D::use");
+	print_line(GDVIRTUAL_IS_OVERRIDDEN(_use) ? "PlatformBody3D::use (VIRTUAL CALL)"
+											 : "PlatformBody3D::use");
 	if (GDVIRTUAL_IS_OVERRIDDEN(_use)) {
 		GDVIRTUAL_CALL(_use, p_activator);
 	} else {

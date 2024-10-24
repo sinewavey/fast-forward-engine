@@ -6,8 +6,10 @@
 #include "core/input/input.h"
 #include "core/input/input_map.h"
 #include "core/input/input_event.h"
+
 #include "scene/main/timer.h"
 #include "scene/3d/camera_3d.h"
+#include "scene/3d/physics/ray_cast_3d.h"
 
 class VirtualBody3D : public PhysicsBody3D {
 	GDCLASS(VirtualBody3D, PhysicsBody3D);
@@ -112,6 +114,9 @@ public: // clang-format off
 	void	  set_camera(Camera3D* p_camera);
 	Camera3D* get_camera() const;
 
+	void	   set_raycast(RayCast3D* p_raycast);
+	RayCast3D* get_raycast() const;
+
 	void   set_duck_timer(Timer* p_timer);
 	Timer* get_duck_timer() const;
 
@@ -187,6 +192,7 @@ private:
 	ObjectID duck_timer{};
 	ObjectID crouch_collider{};
 	ObjectID stand_collider{};
+	ObjectID raycast{};
 
 	InputCmd	 input_cmd{};
 	PhysicsModel phys{};

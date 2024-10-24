@@ -29,4 +29,14 @@ void VirtualBody3D::input(const Ref<InputEvent>& p_event) {
 		}
 		return;
 	}
+
+	if (p_event->is_action_pressed("use")) {
+		if (auto rc = get_raycast(); rc != nullptr) {
+			rc->force_raycast_update();
+			if (auto collider = rc->get_collider()) {
+				rc->call("use", this);
+			}
+		}
+		return;
+	}
 }

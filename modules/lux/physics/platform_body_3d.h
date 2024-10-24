@@ -4,7 +4,10 @@
 #include "../shared.h"
 
 #include "scene/3d/physics/animatable_body_3d.h"
-#include "scene/3d/path_3d.h"
+
+class Path3D;
+class PathFollow3D;
+class RemoteTransform3D;
 
 class PlatformBody3D : public AnimatableBody3D {
 	GDCLASS(PlatformBody3D, AnimatableBody3D);
@@ -15,6 +18,9 @@ public:
 
 	void	set_path_3d(Path3D* p_node);
 	Path3D* get_path_3d() const;
+
+	void			   set_remote_transform(RemoteTransform3D* p_node);
+	RemoteTransform3D* get_remote_transform() const;
 
 	void	 set_surface_flags(uint32_t p_flags);
 	uint32_t get_surface_flags() const;
@@ -37,11 +43,12 @@ protected:
 	static void _bind_methods();
 	void		_notification(int p_what);
 
-	GDVIRTUAL1(_use, Node *)
+	GDVIRTUAL1(_use, Node*)
 
 private:
 	ObjectID path_follower{};
 	ObjectID path_3d{};
+	ObjectID remote_transform{};
 
 	real_t	 move_progress{ 0.0 };
 	uint32_t surface_flags{ 0 };

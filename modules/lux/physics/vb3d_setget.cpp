@@ -33,6 +33,14 @@ Camera3D* VirtualBody3D::get_camera() const {
 	return Object::cast_to<Camera3D>(ObjectDB::get_instance(camera));
 }
 
+void VirtualBody3D::set_raycast(RayCast3D* p_raycast) {
+	raycast = Lux::get_id_or_null(p_raycast);
+}
+
+RayCast3D* VirtualBody3D::get_raycast() const {
+	return Object::cast_to<RayCast3D>(ObjectDB::get_instance(raycast));
+}
+
 void VirtualBody3D::set_duck_timer(Timer* p_timer) {
 	duck_timer = Lux::get_id_or_null(p_timer);
 }

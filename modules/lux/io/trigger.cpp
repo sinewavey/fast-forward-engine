@@ -78,14 +78,12 @@ BitField<Lux::TriggerFlag> Trigger::get_flags() const {
 }
 
 void Trigger::body_entered(Node3D* p_body) {
-	print_line(get_name(), "body enter:", p_body->get_name());
 	if (flags & Lux::TRIGGER_ON_ENTRY) {
 		use(p_body);
 	}
 }
 
 void Trigger::body_exited(Node3D* p_body) {
-	print_line(get_name(), "body exit:", p_body->get_name());
 	if (flags & Lux::TRIGGER_ON_EXIT) {
 		use(p_body);
 	}

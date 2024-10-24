@@ -153,6 +153,7 @@ void	 add_child_persist(Node* p_parent,
 		Node*					 p_child,
 		bool					 p_readable_name = false,
 		Lux::AddChildOwner p_owner				 = Lux::OWNER_ROOT);
+void	 add_sibling_persist(Node* p_caller, Node* p_new, bool p_readable_name);
 
 namespace FGD {
 
